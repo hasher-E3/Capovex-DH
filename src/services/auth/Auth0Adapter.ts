@@ -1,4 +1,6 @@
 import { randomUUID } from 'crypto';
+
+import { logDebug, logError } from '@/lib/logger';
 import prisma from '../../lib/prisma';
 
 import { ServiceError } from '@/services';
@@ -139,7 +141,7 @@ export class Auth0Adapter implements IAuth {
 		const patchData = await patch.json();
 
 		if (process.env.DEBUG_LOGS === 'true') {
-			console.log('patchData', patchData);
+			logDebug('patchData', patchData);
 		}
 
 		return patch.ok
@@ -192,7 +194,7 @@ export class Auth0Adapter implements IAuth {
 
 			return { success: true, message: 'Name updated successfully' };
 		} catch (error) {
-			console.error('[Auth0Adapter.changeName]', error);
+			logError('[Auth0Adapter.changeName]', error);
 			return {
 				success: false,
 				message: 'Failed to update name',

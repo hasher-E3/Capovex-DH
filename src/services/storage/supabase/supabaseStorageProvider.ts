@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+import { logError } from '@/lib/logger';
+
 import { FileMetadata, ServiceError, StorageProvider, UploadResult } from '@/services';
 
 const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_BUCKET as string;
@@ -34,7 +36,7 @@ export class SupabaseProvider implements StorageProvider {
 		});
 
 		if (error) {
-			console.error('Supabase upload error:', error);
+			logError('Supabase upload error:', error);
 			throw new ServiceError('File upload failed.', 500);
 		}
 
@@ -50,7 +52,7 @@ export class SupabaseProvider implements StorageProvider {
 		const { error } = await this.supabase.storage.from(bucket).remove([filePath]);
 
 		if (error) {
-			console.error('Supabase delete error:', error);
+			logError('Supabase delete error:', error);
 			throw new ServiceError('File deletion failed.', 500);
 		}
 	}
@@ -67,7 +69,7 @@ export class SupabaseProvider implements StorageProvider {
 			const { data, error } = await this.supabase.storage.from(bucket).list(dir, { limit: 10_000 });
 
 			if (error) {
-				console.error('Supabase list error:', error);
+				logError('Supabase list error:', error);
 				throw new ServiceError('File list failed.', 500);
 			}
 

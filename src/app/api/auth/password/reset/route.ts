@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { logError } from '@/lib/logger';
+
 import { authService } from '@/services';
 import { ResetPasswordSchema } from '@/shared/validation/authSchemas';
 
@@ -30,7 +33,7 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
-		console.error('[reset]', err);
+		logError('[reset]', err);
 		return NextResponse.json({ message: 'Server error' }, { status: 500 });
 	}
 }

@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { logError } from '@/lib/logger';
+
 import { authService } from '@/services';
 
 /** POST /api/auth/password/forgot  { email } */
@@ -29,7 +31,7 @@ export async function POST(req: NextRequest) {
 
 		return NextResponse.json({ message: result.message }, { status: 201 });
 	} catch (err) {
-		console.error('[forgot]', err);
+		logError('[forgot]', err);
 		return NextResponse.json({ message: 'Server error' }, { status: 500 });
 	}
 }

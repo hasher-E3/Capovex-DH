@@ -1,3 +1,4 @@
+import { logError } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 
 import { ServiceError } from '@/services';
@@ -89,7 +90,7 @@ export const analyticsService = {
 			const analytics = await prisma.documentAnalytics.create({ data: params });
 			return analytics;
 		} catch (error) {
-			console.error('Error logging analytics event:', error);
+			logError('Error logging analytics event:', error);
 			throw new ServiceError('Failed to log analytics event', 500);
 		}
 	},

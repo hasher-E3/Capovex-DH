@@ -1,7 +1,7 @@
 import prisma from '@/lib/prisma';
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService } from '@/services';
+import { authService, createErrorResponse } from '@/services';
 import { buildLinkUrl } from '@/shared/utils';
 
 export async function GET(req: NextRequest): Promise<NextResponse> {
@@ -74,9 +74,4 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 	} catch (error) {
 		return createErrorResponse('Server error.', 500, error);
 	}
-}
-
-function createErrorResponse(message: string, status: number, details?: any) {
-	console.error(`[${new Date().toISOString()}] ${message}`, details);
-	return NextResponse.json({ error: message, details }, { status });
 }

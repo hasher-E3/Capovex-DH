@@ -1,5 +1,6 @@
-import { SupabaseProvider } from '@/services/storage/supabase/supabaseStorageProvider';
+import { logWarn, logError } from '@/lib/logger';
 
+import { SupabaseProvider } from '@/services/storage/supabase/supabaseStorageProvider';
 /**
  * Metadata for a file upload.
  * Describes additional information passed during file upload.
@@ -62,21 +63,21 @@ export class PlaceholderProvider implements StorageProvider {
 		metadata: FileMetadata,
 		_bucket?: string,
 	): Promise<UploadResult> {
-		console.warn('PlaceholderProvider: Upload called.');
+		logWarn('PlaceholderProvider: Upload called.');
 		return { filePath: 'https://example.com/placeholder-url' }; // Placeholder URL
 	}
 
 	async delete(filePath: string, _bucket?: string): Promise<void> {
-		console.warn('PlaceholderProvider: Delete called.');
+		logWarn('PlaceholderProvider: Delete called.');
 	}
 
 	async list(prefix: string, _bucket?: string): Promise<string[]> {
-		console.warn('PlaceholderProvider: List called.');
+		logWarn('PlaceholderProvider: List called.');
 		return [];
 	}
 
 	async generateSignedUrl(filePath: string, expiresIn: number, _bucket?: string): Promise<string> {
-		console.warn('PlaceholderProvider: Generate signed URL called.');
+		logWarn('PlaceholderProvider: Generate signed URL called.');
 		return `https://example.com/signed-url?file=${filePath}&expires_in=${expiresIn}`;
 	}
 }
@@ -114,7 +115,7 @@ export const storageService = {
 			const result = await storageProvider.upload(fileBuffer, metadata, bucket);
 			return result.filePath;
 		} catch (error) {
-			console.error('Error uploading file:', error);
+			logError('Error uploading file:', error);
 			throw new Error('File upload failed.');
 		}
 	},
@@ -148,7 +149,7 @@ export const storageService = {
 		try {
 			await storageProvider.delete(filePath, bucket);
 		} catch (error) {
-			console.error('Error deleting file:', error);
+			logError('Error deleting file:', error);
 			throw new Error('File deletion failed.');
 		}
 	},

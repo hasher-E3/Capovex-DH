@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 
+import { logError } from '@/lib/logger';
 /**
  * Creates a consistent JSON error response for API routes.
  *
@@ -8,8 +9,9 @@ import { NextResponse } from 'next/server';
  * @param details - Optional error details for logging.
  * @returns A NextResponse object containing the error message and status.
  */
+
 export function createErrorResponse(message: string, status: number, details?: any) {
-	console.error(`[${new Date().toISOString()}] ${message}`, details);
+	logError(`[${new Date().toISOString()}] ${message}`, details);
 	return NextResponse.json({ message }, { status });
 }
 

@@ -1,5 +1,7 @@
 import { Dialog } from '@mui/material';
 
+import { logWarn } from '@/lib/logger';
+
 import { ModalDialogProps, useModalContext } from '@/providers/modal/ModalProvider';
 import { MODAL_REGISTRY } from '@/providers/modal/ModalRegistry';
 
@@ -13,7 +15,7 @@ export default function ModalContainer() {
 	const { type, dialogProps = {}, contentProps } = currentModal;
 	const entry = MODAL_REGISTRY[type];
 	if (!entry) {
-		console.warn('No registry entry for modal type:', type);
+		logWarn('No registry entry for modal type:', type);
 		return null;
 	}
 
