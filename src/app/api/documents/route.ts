@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
 		// Validate file with environment constraints
 		try {
-			documentService.validateUploadFile(file);
+			await documentService.validateUploadFile(file);
 		} catch (err) {
 			if (err instanceof Error) {
 				if (err.message === 'INVALID_FILE_TYPE') {

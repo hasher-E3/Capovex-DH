@@ -4,26 +4,35 @@ import { randomUUID } from 'crypto';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
-import { SupabaseProvider } from '@/services/storage/supabase/supabaseStorageProvider';
 import { buildLinkUrl } from '@/shared/utils';
-import { ServiceError } from './errorService';
+
+import { ServiceError, storageService, systemSettingService } from '@/services';
 
 export const linkService = {
 	/**
-	 * Lists all links for a specific document, ensuring ownership.
+	 * Retrieves all links for a specific document, ensuring the requesting user owns the document.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentId - The unique identifier of the document.
+	 * @returns An array of document links if found, or null if the document is not found or not owned by the user.
 	 */
 	async getDocumentLinks(userId: string, documentId: string) {
-		// Ensure doc ownership
 		const doc = await prisma.document.findFirst({
 			where: { documentId, userId },
 			include: { documentLinks: true },
 		});
-		if (!doc) return null; // doc not found or no access
+		if (!doc) return null;
 		return doc.documentLinks;
 	},
 
 	/**
 	 * Creates a new link for the specified document if the user owns it.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentId - The unique identifier of the document.
+	 * @param options - Options for link creation, including alias, public status, password, expiration, and visitor fields.
+	 * @returns The created document link with a generated URL.
+	 * @throws ServiceError if the document is not found, expiration is in the past, or alias conflicts.
 	 */
 	async createLinkForDocument(
 		userId: string,
@@ -49,6 +58,13 @@ export const linkService = {
 			if (expirationTime && new Date(expirationTime) < new Date()) {
 				throw new ServiceError('EXPIRATION_PAST', 400);
 			}
+			let finalExpiration: Date | null = null;
+			if (expirationTime) {
+				finalExpiration = new Date(expirationTime);
+			} else {
+				const ttl = (await systemSettingService.getSystemSettings()).defaultTtlSeconds;
+				finalExpiration = new Date(Date.now() + ttl * 1_000);
+			}
 
 			// Generate link details
 			const slug = randomUUID(); // <- documentLinkId
@@ -63,7 +79,7 @@ export const linkService = {
 						alias: alias?.trim() || null,
 						isPublic,
 						password: hashedPassword,
-						expirationTime: expirationTime ? new Date(expirationTime) : null,
+						expirationTime: finalExpiration,
 						visitorFields,
 					},
 				});
@@ -78,8 +94,14 @@ export const linkService = {
 			}
 		});
 	},
+
 	/**
 	 * Deletes a link if it belongs to the user.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentLinkId - The unique identifier of the document link.
+	 * @returns The deleted document link record.
+	 * @throws ServiceError if the link is not found or not owned by the user.
 	 */
 	async deleteLink(userId: string, documentLinkId: string) {
 		const link = await prisma.documentLink.findFirst({
@@ -93,8 +115,10 @@ export const linkService = {
 	},
 
 	/**
-	 * Retrieves a link (no user auth required), checks if it exists.
-	 * If expired, caller can handle. Returns the raw link record.
+	 * Retrieves a public link by its identifier.
+	 *
+	 * @param linkId - The public link identifier.
+	 * @returns The document link record if found, otherwise null.
 	 */
 	async getPublicLink(linkId: string) {
 		return prisma.documentLink.findUnique({
@@ -103,7 +127,11 @@ export const linkService = {
 	},
 
 	/**
-	 * Verifies a link's password if it exists, returning true if valid or no password.
+	 * Verifies a link's password if it exists, returning true if valid or if no password is set.
+	 *
+	 * @param link - The link object containing the password hash or null.
+	 * @param providedPassword - The password provided by the user.
+	 * @returns True if the password is valid or not required, false otherwise.
 	 */
 	async verifyLinkPassword(
 		link: { password: string | null },
@@ -126,6 +154,7 @@ export const linkService = {
 	 * @param password  - The password submitted (if any).
 	 * @param options   - Optional settings, e.g. { skipPasswordCheck: true }.
 	 * @returns The link record if accessible, or throws a ServiceError.
+	 * @throws ServiceError if link not found, expired, or password invalid.
 	 */
 	async validateLinkAccess(
 		linkId: string,
@@ -149,8 +178,15 @@ export const linkService = {
 	},
 
 	/**
-	 * Logs a new record in LinkVisitors for this link
-	 * @returns the created row or `null` when skipped (public link).
+	 * Logs a new record in LinkVisitors for this link.
+	 * Skips logging if the link is public.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @param firstName - The visitor's first name (optional).
+	 * @param lastName - The visitor's last name (optional).
+	 * @param email - The visitor's email address (optional).
+	 * @param visitorMetaData - Additional metadata about the visitor.
+	 * @returns The created visitor record, or null if logging is skipped.
 	 */
 	async logVisitor(
 		linkId: string,
@@ -171,7 +207,12 @@ export const linkService = {
 	},
 
 	/**
-	 * Retrieves all visitors who accessed a specific link under this document.
+	 * Retrieves all visitors who accessed a specific link under a document, ensuring ownership.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentId - The unique identifier of the document.
+	 * @param linkId - The unique identifier of the document link.
+	 * @returns An array of visitor records, or null if the link is not found or not owned by the user.
 	 */
 	async getDocumentLinkVisitors(userId: string, documentId: string, linkId: string) {
 		// Ensure the link belongs to the specified document and user (i.e., verify ownership)
@@ -190,6 +231,10 @@ export const linkService = {
 	/**
 	 * Generates a signed file URL for the Document associated with this link,
 	 * checking if the link is expired. Throws if link invalid/expired.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @returns An object containing the signed URL, file name, size, file type, and document ID.
+	 * @throws ServiceError if the link or document is not found, or if the link is expired.
 	 */
 	async getSignedFileFromLink(linkId: string): Promise<{
 		signedUrl: string;
@@ -206,7 +251,7 @@ export const linkService = {
 			throw new ServiceError('Link not found', 404);
 		}
 
-		const defaultTtl = Number(process.env.DEFAULT_TTL) || 86_400; // 24 h fallback
+		const { defaultTtlSeconds: defaultTtl } = await systemSettingService.getSystemSettings();
 		let expiresIn = defaultTtl;
 
 		if (link.expirationTime) {
@@ -219,8 +264,7 @@ export const linkService = {
 			expiresIn = Math.min(defaultTtl, secondsUntilLinkExpires);
 		}
 
-		const supabaseProvider = new SupabaseProvider();
-		const signedUrl = await supabaseProvider.generateSignedUrl(link.document.filePath, expiresIn);
+		const signedUrl = await storageService.generateSignedUrl(link.document.filePath, expiresIn);
 
 		return {
 			signedUrl,
@@ -232,9 +276,12 @@ export const linkService = {
 	},
 
 	/**
-	 * Lightweight meta fetch used by the public GET route.
-	 * – does *not* log analytics
-	 * – throws ServiceError if link invalid / expired
+	 * Fetches lightweight metadata for a link, used by the public GET route.
+	 * Does not log analytics. Throws if the link is invalid or expired.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @returns An object containing password protection status, visitor fields, and (if public and unrestricted) signed file metadata.
+	 * @throws ServiceError if the link is not found or expired.
 	 */
 	async getLinkMeta(linkId: string) {
 		const link = await prisma.documentLink.findUnique({
