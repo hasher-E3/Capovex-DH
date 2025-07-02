@@ -4,7 +4,7 @@ import { memo, use } from 'react';
 import dayjs from 'dayjs';
 import { BarChart } from '@mui/x-charts/BarChart';
 
-import { AnalyticsBucket } from '@/shared/models/analyticsModels';
+import { AnalyticsBucket } from '@/shared/models/';
 import { useSort } from '@/hooks';
 
 interface CustomBarChartProps {

@@ -1,5 +1,3 @@
-import { systemSettingService } from '@/services';
-
 /**
  * Returns a standardized log prefix for all log messages.
  *
@@ -18,12 +16,7 @@ function stamp(level: string): string {
  * @returns A promise that resolves when logging is complete.
  */
 export async function logDebug(...args: any[]): Promise<void> {
-	try {
-		const { debugLogs } = await systemSettingService.getSystemSettings();
-		if (debugLogs) console.debug(stamp('DEBUG'), ...args);
-	} catch {
-		// Ignore errors to avoid crashing during bootstrap
-	}
+	console.debug(stamp('DEBUG'), ...args);
 }
 
 /**

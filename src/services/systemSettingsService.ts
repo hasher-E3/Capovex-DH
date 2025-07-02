@@ -132,7 +132,7 @@ export const systemSettingService = {
 	 * Throws if notifications are disabled or sender identity is not configured.
 	 * Decrypts the Brevo API key to ensure it is valid before sending.
 	 *
-	 * @param param0 - The test email payload containing the recipient address.
+	 * @param param - The test email payload containing the recipient address.
 	 * @throws ServiceError if notifications are disabled, sender identity is missing, or Brevo key is invalid.
 	 */
 	async sendTestEmail({ to }: TestEmailPayload): Promise<void> {

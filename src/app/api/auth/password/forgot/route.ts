@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/logger';
 
-import { authService, systemSettingService } from '@/services';
+import { systemSettingService } from '@/services';
+import { authService } from '@/services/auth/authService';
 
 /** POST /api/auth/password/forgot  { email } */
 export async function POST(req: NextRequest) {

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService, createErrorResponse, documentService, storageService } from '@/services';
+import { createErrorResponse, documentService, storageService } from '@/services';
+import { authService } from '@/services/auth/authService';
+
 import { buildLinkUrl } from '@/shared/utils';
 
 /**

@@ -92,9 +92,9 @@ function selectStorageProvider(): StorageProvider {
 	switch (provider) {
 		case 'supabase':
 			return new SupabaseProvider();
-		// case 'local':
-		//   // PlaceholderProvider can be replaced with an actual LocalProvider later
-		//   return new PlaceholderProvider();
+		case 'local':
+			// PlaceholderProvider can be replaced with an actual LocalProvider later
+			return new PlaceholderProvider();
 		default:
 			throw new Error(`Unsupported storage provider specified in STORAGE_PROVIDER: ${provider}`);
 	}

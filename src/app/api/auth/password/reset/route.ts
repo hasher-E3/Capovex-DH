@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logError } from '@/lib/logger';
 
-import { authService } from '@/services';
+import { authService } from '@/services/auth/authService';
 import { ResetPasswordSchema } from '@/shared/validation/authSchemas';
 
 /** POST /api/auth/password/reset  { token, newPassword } */

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService } from '@/services';
+import { authService } from '@/services/auth/authService';
 
 import { logDebug, logError } from '@/lib/logger';
 
