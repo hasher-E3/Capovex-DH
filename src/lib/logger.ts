@@ -1,16 +1,21 @@
 import { systemSettingService } from '@/services';
 
 /**
- * Returns a standardized log prefix.
- * @param level - The log level.
+ * Returns a standardized log prefix for all log messages.
+ *
+ * @param level - The log level (e.g., 'DEBUG', 'INFO', 'WARN', 'ERROR').
+ * @returns The formatted log prefix string.
  */
-function stamp(level: string) {
+function stamp(level: string): string {
 	return `[Datahall][${level}]`;
 }
 
 /**
  * Logs a debug message if debugLogs is enabled in system settings.
- * @param args - Arguments to log.
+ * This function is asynchronous because it queries the system settings.
+ *
+ * @param args - The arguments to log (any type).
+ * @returns A promise that resolves when logging is complete.
  */
 export async function logDebug(...args: any[]): Promise<void> {
 	try {
@@ -22,8 +27,9 @@ export async function logDebug(...args: any[]): Promise<void> {
 }
 
 /**
- * Logs an info message.
- * @param args - Arguments to log.
+ * Logs an informational message.
+ *
+ * @param args - The arguments to log (any type).
  */
 export function logInfo(...args: any[]): void {
 	console.info(stamp('INFO'), ...args);
@@ -31,7 +37,8 @@ export function logInfo(...args: any[]): void {
 
 /**
  * Logs a warning message.
- * @param args - Arguments to log.
+ *
+ * @param args - The arguments to log (any type).
  */
 export function logWarn(...args: any[]): void {
 	console.warn(stamp('WARN'), ...args);
@@ -39,7 +46,8 @@ export function logWarn(...args: any[]): void {
 
 /**
  * Logs an error message.
- * @param args - Arguments to log.
+ *
+ * @param args - The arguments to log (any type).
  */
 export function logError(...args: any[]): void {
 	console.error(stamp('ERROR'), ...args);

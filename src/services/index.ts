@@ -8,3 +8,4 @@ export { documentService } from './documentService';
 export { emailService } from './email/emailService';
 export { createErrorResponse, ServiceError } from './errorService';
 export { linkService } from './linkService';
+export { systemSettingService } from './systemSettingsService';
