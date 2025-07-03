@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createErrorResponse, linkService } from '@/services';
 import { authService } from '@/services/auth/authService';
 
-import { buildLinkUrl } from '@/shared/utils';
+import { buildDocumentLinkUrl } from '@/shared/utils';
 import { DocumentLinkPayloadSchema } from '@/shared/validation/documentLinkSchemas';
 
 /**
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ documentI
 			documentId: link.documentId,
 			linkId: link.documentLinkId,
 			alias: link.alias,
-			createdLink: buildLinkUrl(link.documentLinkId),
+			createdLink: buildDocumentLinkUrl(link.documentLinkId),
 			lastViewed: link.updatedAt,
 			linkViews: 0,
 		}));

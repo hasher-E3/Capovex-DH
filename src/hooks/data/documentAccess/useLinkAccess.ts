@@ -3,9 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import usePublicLinkMeta from './usePublicLinkMeta';
 
 import { useModalContext } from '@/providers/modal/ModalProvider';
-import type { PublicLinkFilePayload, PublicLinkMetaResponse } from '@/shared/models';
 
-export type LinkAccessState = 'loading' | 'gate' | 'file' | 'error';
+import type {
+	LinkAccessState,
+	PublicLinkFilePayload,
+	PublicLinkMetaResponse,
+} from '@/shared/models';
 
 interface UseLinkAccessResult {
 	state: LinkAccessState;

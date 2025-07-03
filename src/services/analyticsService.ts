@@ -11,7 +11,7 @@ import type {
 	AnalyticsSummary,
 	DocumentLinkStat,
 } from '@/shared/models/analyticsModels';
-import { buildLinkUrl } from '@/shared/utils';
+import { buildDocumentLinkUrl } from '@/shared/utils';
 
 /* -------------------------------------------------------------------------- */
 /*  Service (PUBLIC)                                                          */
@@ -179,7 +179,7 @@ async function getPerLinkStats(documentId: string): Promise<DocumentLinkStat[]> 
 		return {
 			linkId: link.documentLinkId,
 			linkAlias: link.alias,
-			linkUrl: buildLinkUrl(link.documentLinkId),
+			linkUrl: buildDocumentLinkUrl(link.documentLinkId),
 			...stats,
 		};
 	});
