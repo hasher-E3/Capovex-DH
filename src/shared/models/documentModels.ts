@@ -1,8 +1,9 @@
 import { FileType } from '@/shared/config/fileIcons';
 import { LinkDetailRow } from './linkModels';
 
-// =========== DOCUMENT TYPE ===========
-
+/**
+ * Represents a document stored in the system.
+ */
 export interface DocumentType {
 	documentId: string; // The unique DB identifier (cuid)
 	fileName: string;
@@ -19,13 +20,4 @@ export interface DocumentType {
 	viewers: number; // The sum of all LinkVisitors for all links
 	views: number; // Potential total doc views (0 if not tracked)
 	createdLinks?: LinkDetailRow[]; // If you want to store link details
-}
-
-// ====== CHART TYPE ======
-
-export interface BarDataItem {
-	month: string;
-	Views: number;
-	Downloads: number;
-	date: Date;
 }

@@ -1,12 +1,23 @@
-// src/shared/models/analyticsModels.ts
 import { AnalyticsEventType } from '@/shared/enums';
 import type { Prisma } from '@prisma/client';
 
-/*─────────────── period filter ───────────────*/
+/* -------------------------------------------------------------------------- */
+/*  Analytics Periods and Options                                             */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Supported analytics periods for filtering.
+ */
 export const ANALYTICS_PERIODS = ['7d', '30d', 'all'] as const;
-/** `'all' | '30d' | '7d'` – re-use everywhere */
+
+/**
+ * Type representing a valid analytics period.
+ */
 export type AnalyticsPeriod = (typeof ANALYTICS_PERIODS)[number];
 
+/**
+ * Options for analytics period selection (for UI).
+ */
 export const PERIOD_OPTIONS: readonly {
 	value: AnalyticsPeriod;
 	label: string;
@@ -17,13 +28,22 @@ export const PERIOD_OPTIONS: readonly {
 	{ value: 'all', label: 'All Time', aria: 'All Time' },
 ] as const;
 
-/*─────────────── payload models ──────────────*/
+/* -------------------------------------------------------------------------- */
+/*  Analytics Data Models                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Represents a time-series analytics bucket (e.g., daily).
+ */
 export interface AnalyticsBucket {
 	date: string; // YYYY-MM-DD
 	views: number;
 	downloads: number;
 }
 
+/**
+ * Analytics summary for a specific document link.
+ */
 export interface DocumentLinkStat {
 	linkId: string;
 	linkAlias?: string | null;
@@ -32,6 +52,9 @@ export interface DocumentLinkStat {
 	lastDownloaded: string | null;
 }
 
+/**
+ * Analytics summary for a document, including totals and per-link stats.
+ */
 export interface AnalyticsSummary {
 	totalViews: number;
 	totalDownloads: number;
@@ -40,6 +63,9 @@ export interface AnalyticsSummary {
 	buckets: AnalyticsBucket[];
 }
 
+/**
+ * Analytics event payload for logging document or link activity.
+ */
 export interface AnalyticsEvent {
 	documentId: string;
 	documentLinkId?: string;
