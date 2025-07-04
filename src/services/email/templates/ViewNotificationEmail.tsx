@@ -47,8 +47,8 @@ export function ViewNotificationEmail({
 				</Heading>
 
 				<Text style={{ fontSize: '16px', lineHeight: '24px', marginBottom: '24px' }}>
-					Just a quick update — your document <strong>"{documentName}"</strong> was viewed on{' '}
-					<strong>{viewedAt}</strong>.
+					Just a quick update — your document <strong>&ldquo;{documentName}&rdquo;</strong> was
+					viewed on <strong>{viewedAt}</strong>.
 				</Text>
 
 				<Text style={{ fontSize: '14px', lineHeight: '22px', marginBottom: '32px' }}>

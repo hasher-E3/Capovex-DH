@@ -1,13 +1,12 @@
-import { parseBoolean } from './formDataUtils';
 export { computeExpirationDays, formatDateTime } from './dateUtils';
 export type { FormatDateTimeOptions } from './dateUtils';
 
 export {
 	downloadFile,
+	exportToCsv,
 	formatFileSize,
 	isViewableFileType,
 	parseFileSize,
-	exportToCsv,
 } from './fileUtils';
 export type { FormatFileSizeOptions } from './fileUtils';
 
@@ -26,6 +25,6 @@ export {
 } from './validators';
 export type { ValidationRule } from './validators';
 
-export { buildLinkUrl } from './urlBuilder';
+export { buildDocumentLinkUrl, buildResetPasswordUrl, buildVerificationUrl } from './urlBuilder';
 
-export { parseBoolean, emptyToNull } from './formDataUtils';
+export { emptyToNull, parseBoolean, dedupeByEmail, handleEmailSelection } from './formDataUtils';

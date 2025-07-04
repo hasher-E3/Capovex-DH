@@ -24,7 +24,6 @@ class EmailService extends BaseAdapter {
 	private async resolveAdapter(): Promise<BaseAdapter> {
 		const brevoConfig = await systemSettingService.getBrevoConfig();
 
-		// If Brevo is not configured, use DevAdapter
 		if (!brevoConfig) {
 			logWarn('[emailService] Brevo not configured – using DevAdapter.');
 			return new DevAdapter();

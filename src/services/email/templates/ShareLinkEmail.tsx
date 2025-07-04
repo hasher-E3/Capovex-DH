@@ -1,26 +1,29 @@
-import { Html } from '@react-email/html';
+import { Button } from '@react-email/button';
 import { Container } from '@react-email/container';
 import { Heading } from '@react-email/heading';
-import { Text } from '@react-email/text';
-import { Button } from '@react-email/button';
+import { Hr } from '@react-email/hr';
+import { Html } from '@react-email/html';
 import { Img } from '@react-email/img';
 import { Section } from '@react-email/section';
-import { Hr } from '@react-email/hr';
+import { Text } from '@react-email/text';
+import { Link } from '@react-email/link';
 
-export const subject = 'Datahall | A document was shared with you';
-export const label = 'Document Shared Email';
+export const subject = (doc: string) => `Datahall | A file was shared with you: ${doc}`;
+export const label = 'Link Shared Email';
 
-export function DocumentSharedEmail({
-	recipientName,
-	senderName,
-	documentName,
-	linkUrl,
-}: {
-	recipientName?: string;
-	senderName: string;
-	documentName: string;
+interface ShareLinkEmailProps {
 	linkUrl: string;
-}) {
+	fileName?: string;
+	senderName?: string | null;
+	recipientName?: string | null;
+}
+
+export function ShareLinkEmail({
+	linkUrl,
+	fileName,
+	senderName,
+	recipientName,
+}: ShareLinkEmailProps) {
 	return (
 		<Html>
 			<Container
@@ -34,7 +37,7 @@ export function DocumentSharedEmail({
 					<Img
 						src='https://utfs.io/f/fYAncjDxKRb0SB5lSuLK58qIuaP0cF3tMzrJCA4G92LHNofp'
 						width='100'
-						alt='Bluewave Labs'
+						alt='Datahall'
 					/>
 				</Section>
 
@@ -50,12 +53,12 @@ export function DocumentSharedEmail({
 				</Heading>
 
 				<Text style={{ fontSize: '16px', lineHeight: '24px', marginBottom: '24px' }}>
-					<strong>{senderName}</strong> has shared a document with you via <strong>Datahall</strong>
-					.
+					{senderName ? `${senderName} shared a file` : 'A file was shared with you'} via{' '}
+					<strong>Datahall</strong>
 				</Text>
 
 				<Text style={{ fontSize: '16px', lineHeight: '24px', marginBottom: '16px' }}>
-					Document: <strong>{documentName}</strong>
+					<strong>{fileName ? `File: ${fileName}` : ''}</strong>.
 				</Text>
 
 				<Section style={{ textAlign: 'center', marginBottom: '32px' }}>
@@ -69,12 +72,22 @@ export function DocumentSharedEmail({
 							borderRadius: '6px',
 							textDecoration: 'none',
 						}}>
-						View Document
+						Open File
 					</Button>
 				</Section>
 
-				<Text style={{ fontSize: '14px', textAlign: 'center', lineHeight: '22px' }}>
-					If you weren’t expecting this document, you can safely ignore this email.
+				{/* Raw clickable link */}
+				<Text style={{ fontSize: '14px', textAlign: 'center', marginBottom: '24px' }}>
+					Or open directly:{' '}
+					<a
+						href={linkUrl}
+						style={{ color: '#2563eb', wordBreak: 'break-all' }}>
+						{linkUrl}
+					</a>
+				</Text>
+
+				<Text style={{ fontSize: '14px', color: '#6b7280', textAlign: 'center' }}>
+					If you weren’t expecting this file, you can safely ignore this email.
 				</Text>
 
 				<Hr style={{ margin: '32px 0', borderColor: '#e5e7eb' }} />
@@ -87,4 +100,4 @@ export function DocumentSharedEmail({
 	);
 }
 
-export default DocumentSharedEmail;
+export default ShareLinkEmail;

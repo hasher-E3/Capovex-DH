@@ -4,6 +4,8 @@
 // avoid ad-hoc parsing logic scattered throughout API routes.
 // -----------------------------------------------------------------------------
 
+import { isValidEmail } from '../validation/validationUtils';
+
 /**
  * Parses a string value (typically from a form input such as a checkbox)
  * into a boolean. Recognizes common truthy and falsy representations.
@@ -39,3 +41,38 @@ export function emptyToNull(raw?: string | null): string | null | undefined {
 	const trimmed = raw.trim();
 	return trimmed === '' ? null : trimmed;
 }
+
+/**
+ * Deduplicate an array of items by e-mail (case-insensitive).
+ * Accepts either ContactOption[] or string[].
+ *
+ * @param arr - Array of ContactOption or string.
+ * @param getEmail - Function to extract the e-mail from each item.
+ * @returns Deduplicated array.
+ */
+export function dedupeByEmail<T>(arr: T[], getEmail: (item: T) => string): T[] {
+	return Array.from(new Map(arr.map((item) => [getEmail(item).toLowerCase(), item])).values());
+}
+
+/**
+ * Generalized handler for Autocomplete onChange.
+ * Handles both ContactOption[] and string[] (free-form e-mails).
+ *
+ * @param event - The SyntheticEvent from Autocomplete.
+ * @param newValue - The new value array.
+ * @param onChange - The form onChange handler.
+ * @param getEmail - Function to extract e-mail from each item.
+ * @param filterValid - Optional: filter for valid e-mails (for free-form).
+ */
+export const handleEmailSelection = <T>(
+	newValue: T[],
+	onChange: (val: any) => void,
+	getEmail: (item: T) => string,
+	filterValid?: boolean,
+) => {
+	let items = newValue;
+	if (filterValid) {
+		items = (newValue as string[]).map((s) => s.trim()).filter(isValidEmail) as T[];
+	}
+	onChange(dedupeByEmail(items, getEmail));
+};
