@@ -10,7 +10,7 @@
  * @returns The base host URL as a string.
  */
 function getHost(): string {
-	return process.env.HOST ?? 'http://localhost:3000';
+	return process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 }
 
 /**

@@ -87,3 +87,12 @@ export interface LinkVisitor {
 	visitedAt: string; // ISO date string
 	visitorMetaData: string | null; // Optional metadata (e.g., browser info)
 }
+
+/**
+ * Recipient object for share-link invitations.
+ * Contains email and optional name.
+ */
+export interface ShareLinkRecipient {
+	email: string;
+	name?: string;
+}

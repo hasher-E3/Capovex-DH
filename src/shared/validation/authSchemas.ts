@@ -23,11 +23,10 @@ const email = z
 	.email('Invalid e-mail address');
 
 /**
- * Our canonical password rule:
+ * Canonical password rule:
  *   – ≥ 8 chars
  *   – ≥ 1 uppercase
  *   – ≥ 1 symbol
- *
  */
 const password = z
 	.string({ required_error: 'Password is required' })
@@ -35,8 +34,10 @@ const password = z
 	.regex(PASSWORD_RULES.NEEDS_UPPERCASE, 'Must contain an uppercase letter')
 	.regex(PASSWORD_RULES.NEEDS_SYMBOL, 'Must include a symbol');
 
+/** E-mail field with required validation */
 const emailRequired = z.string().trim().min(1, 'Email is required').email('Invalid e‑mail address');
 
+/** Password field with required validation */
 const passwordRequired = z.string().min(1, 'Password is required');
 
 /* -------------------------------------------------------------------------- */
@@ -44,9 +45,8 @@ const passwordRequired = z.string().min(1, 'Password is required');
 /* -------------------------------------------------------------------------- */
 
 /**
- *  /auth/sign-in
- *  -------------
- *  No confirm-password, optional “remember for 30 days” checkbox.
+ * Schema for /auth/sign-in.
+ * No confirm-password, optional “remember for 30 days” checkbox.
  */
 export const SignInSchema = z.object({
 	email: emailRequired,
@@ -55,10 +55,9 @@ export const SignInSchema = z.object({
 });
 
 /**
- *  /auth/sign-up
- *  -------------
- *  Adds confirm-password and basic first/last name requirements.
- *  A `superRefine` is used for cross-field equality check.
+ * Schema for /auth/sign-up.
+ * Adds confirm-password and basic first/last name requirements.
+ * Uses `superRefine` for cross-field equality check.
  */
 export const SignUpSchema = z
 	.object({
@@ -78,14 +77,16 @@ export const SignUpSchema = z
 		}
 	});
 
-/**  /auth/forgot-password – only an email field */
+/**
+ * Schema for /auth/forgot-password.
+ * Only an email field is required.
+ */
 export const ForgotPasswordSchema = z.object({ email });
 
 /**
- *  /auth/reset-password
- *  --------------------
- *  Token is supplied via URL param; both new/confirm passwords
- *  must satisfy our canonical rules and match each other.
+ * Schema for /auth/reset-password.
+ * Token is supplied via URL param; both new/confirm passwords
+ * must satisfy canonical rules and match each other.
  */
 export const ResetPasswordSchema = z
 	.object({
@@ -106,6 +107,9 @@ export const ResetPasswordSchema = z
 /* -------------------------------------------------------------------------- */
 /*  Client-side variant for the reset-password form (no token field)          */
 /* -------------------------------------------------------------------------- */
+/**
+ * Client-side schema for reset-password form (no token field).
+ */
 export const ResetPasswordFormSchema = z
 	.object({
 		newPassword: password,
@@ -123,12 +127,14 @@ export const ResetPasswordFormSchema = z
 
 /* ───────────────────────────── Default values ────────────────────────────── */
 
+/** Default values for sign-in form */
 export const signInDefaults: SignInValues = {
 	email: '',
 	password: '',
 	remember: false,
 };
 
+/** Default values for sign-up form */
 export const signUpDefaults: SignUpValues = {
 	firstName: '',
 	lastName: '',
@@ -137,20 +143,29 @@ export const signUpDefaults: SignUpValues = {
 	confirmPassword: '',
 };
 
+/** Default values for forgot-password form */
 export const forgotPasswordDefaults: ForgotPasswordValues = { email: '' };
 
+/** Default values for reset-password form */
 export const resetPasswordFormDefaults: ResetPasswordFormValues = {
 	newPassword: '',
 	confirmPassword: '',
 };
+
 /* -------------------------------------------------------------------------- */
 /*  Derived helper types                                                      */
 /* -------------------------------------------------------------------------- */
 
+/** Type for sign-in form values */
 export type SignInValues = z.infer<typeof SignInSchema>;
+/** Type for sign-up form values */
 export type SignUpValues = z.infer<typeof SignUpSchema>;
+/** Type for forgot-password form values */
 export type ForgotPasswordValues = z.infer<typeof ForgotPasswordSchema>;
+/** Type for reset-password form values (server-side) */
 export type ResetPasswordValues = z.infer<typeof ResetPasswordSchema>;
+/** Type for reset-password form values (client-side) */
 export type ResetPasswordFormValues = z.infer<typeof ResetPasswordFormSchema>;
 
+/** Exported primitives for re-use */
 export { email as EmailField, password as PasswordField };

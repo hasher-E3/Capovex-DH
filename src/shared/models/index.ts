@@ -37,6 +37,7 @@ export type {
 	PublicLinkMeta,
 	Contact,
 	LinkVisitor,
+	ShareLinkRecipient,
 	LinkAccessState,
 } from './linkModels';
 
