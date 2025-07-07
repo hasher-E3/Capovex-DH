@@ -4,7 +4,7 @@
 // avoid ad-hoc parsing logic scattered throughout API routes.
 // -----------------------------------------------------------------------------
 
-import { isValidEmail } from '../validation/validationUtils';
+import { isValidEmail } from './validationUtils';
 
 /**
  * Parses a string value (typically from a form input such as a checkbox)

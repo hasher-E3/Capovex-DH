@@ -21,7 +21,7 @@ import type {
 } from '@/shared/models';
 
 import type { IAuth } from './IAuth';
-import { buildResetPasswordUrl, buildVerificationUrl } from '@/shared/utils/urlBuilder';
+import { buildResetPasswordUrl, buildVerificationUrl } from '@/shared/utils/urlBuilderUtils';
 
 export class LocalAuthAdapter implements IAuth {
 	async signUp(request: SignUpRequest): Promise<SignUpResponse> {

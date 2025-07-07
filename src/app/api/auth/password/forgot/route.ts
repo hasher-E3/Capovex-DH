@@ -4,7 +4,7 @@ import { logError } from '@/lib/logger';
 import { systemSettingService } from '@/services';
 import { authService } from '@/services/auth/authService';
 
-import { buildResetPasswordUrl } from '@/shared/utils/urlBuilder';
+import { buildResetPasswordUrl } from '@/shared/utils/urlBuilderUtils';
 
 /** POST /api/auth/password/forgot  { email } */
 export async function POST(req: NextRequest) {

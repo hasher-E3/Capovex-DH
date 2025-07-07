@@ -11,7 +11,7 @@
  */
 
 import { z } from 'zod';
-import { PASSWORD_RULES } from '@/shared/validation/validationUtils';
+import { PASSWORD_RULES } from '@/shared/utils/';
 
 /* -------------------------------------------------------------------------- */
 /*  Re-usable primitives                                                      */
