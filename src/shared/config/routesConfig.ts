@@ -1,5 +1,3 @@
-// THIS IS NOT FUNCTIONAL YET, JUST A TEMPLATE
-
 /**
  * A list of public route patterns, expressed as regex strings.
  */
@@ -14,6 +12,8 @@ export const PUBLIC_ROUTE_PATTERNS: readonly RegExp[] = [
 	/^\/_next\/.*/,
 	/^\/favicon\.ico$/,
 ];
+
+export const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 
 /**
  * Checks if a given pathname is public by testing against the regex patterns.

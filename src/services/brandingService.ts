@@ -7,8 +7,7 @@ import { ServiceError, storageService } from '@/services';
 import { THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
 import { emptyToNull, parseBoolean } from '@/shared/utils';
 
-const ASSETS_BUCKET = process.env.SUPABASE_ASSETS_BUCKET || 'assets';
-const SIGNED_URL_TTL = Number(process.env.SIGNED_URL_TTL_SECONDS || 60 * 60 * 24 * 7); // 7 days
+import { ASSETS_BUCKET, SIGNED_URL_TTL } from '@/shared/config/storageConfig';
 
 /**
  * Represents an uploaded branding image.

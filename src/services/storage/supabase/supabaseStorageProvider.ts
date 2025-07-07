@@ -3,8 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { logError } from '@/lib/logger';
 
 import { FileMetadata, ServiceError, StorageProvider, UploadResult } from '@/services';
+import { STORAGE_BUCKET } from '@/shared/config/storageConfig';
 
-const DEFAULT_BUCKET = process.env.SUPABASE_STORAGE_BUCKET as string;
+const DEFAULT_BUCKET = STORAGE_BUCKET;
 
 export class SupabaseProvider implements StorageProvider {
 	private supabase;
@@ -107,6 +108,7 @@ export class SupabaseProvider implements StorageProvider {
 			.createSignedUrl(filePath, expiresIn);
 
 		if (error) {
+			logError('Supabase signed URL error:', error);
 			throw new ServiceError(`Error generating signed URL: ${error.message}`, 500);
 		}
 
