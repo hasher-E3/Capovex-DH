@@ -73,3 +73,15 @@ export interface AnalyticsEvent {
 	eventType: AnalyticsEventType;
 	meta?: Prisma.InputJsonValue;
 }
+
+/**
+ * Compact, ready-to-render metrics for a document (Phase 1 SSOT).
+ */
+export interface DocumentQuickStats {
+	links: number; // Total document links (public + gated)
+	visitors: number; // Visitor sessions (rows in DocumentLinkVisitor)
+	uniqueContacts: number; // Distinct visitor e-mails (optional Phase 2 use)
+	totalViews: number; // VIEW events count
+	totalDownloads: number; // DOWNLOAD events count
+	lastAccessed: string | null; // ISO timestamp of last view/download
+}

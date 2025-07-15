@@ -20,3 +20,11 @@ export enum AnalyticsEventType {
 	VIEW = 'VIEW',
 	DOWNLOAD = 'DOWNLOAD',
 }
+
+export enum LoadPhase {
+	Idle = 'idle',
+	Bundle = 'bundle',
+	Img = 'img',
+	Pdf = 'pdf',
+	Done = 'done',
+}

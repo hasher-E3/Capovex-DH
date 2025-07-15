@@ -1,25 +1,50 @@
 import prisma from '@/lib/prisma';
-import { ServiceError, storageService, systemSettingService } from '@/services';
+import { ServiceError, statsService, storageService, systemSettingService } from '@/services';
+
+import { SIGNED_URL_TTL, STORAGE_BUCKET } from '@/shared/config/storageConfig';
 
 export const documentService = {
 	/**
 	 * Retrieves all documents for the specified user, including user info and associated links with their visitors.
 	 *
 	 * @param userId - The unique identifier of the user.
-	 * @returns An array of documents with user and link details.
+	 * @returns An array of document records with associated user and link stats.
 	 */
 	async getUserDocuments(userId: string) {
-		return prisma.document.findMany({
+		const docs = await prisma.document.findMany({
 			where: { userId },
-			include: {
-				user: {
-					select: { firstName: true, lastName: true },
-				},
-				documentLinks: {
-					include: { visitors: true },
-				},
+			select: {
+				documentId: true,
+				fileName: true,
+				filePath: true,
+				fileType: true,
+				size: true,
+				createdAt: true,
+				updatedAt: true,
+				user: { select: { firstName: true, lastName: true } },
 			},
 			orderBy: { createdAt: 'desc' },
+		});
+
+		const statsArray = await Promise.all(
+			docs.map((d) => statsService.getQuickStatsForDocument(d.documentId)),
+		);
+
+		return docs.map((doc, idx) => {
+			return {
+				documentId: doc.documentId,
+				fileName: doc.fileName,
+				filePath: doc.filePath,
+				fileType: doc.fileType,
+				size: doc.size,
+				createdAt: doc.createdAt.toISOString(),
+				updatedAt: doc.updatedAt.toISOString(),
+				uploader: {
+					name: `${doc.user.firstName} ${doc.user.lastName}`,
+					avatar: null,
+				},
+				stats: statsArray[idx],
+			};
 		});
 	},
 
@@ -63,13 +88,13 @@ export const documentService = {
 	 *
 	 * @param userId - The unique identifier of the user.
 	 * @param documentId - The unique identifier of the document.
-	 * @returns The document record if found and owned by the user, otherwise null.
+	 * @returns The document record with associated user and stats, or null if not found or no access.
+	 * @throws ServiceError if the document is not found or access is denied.
 	 */
 	async getDocumentById(userId: string, documentId: string) {
-		return prisma.document.findFirst({
+		const doc = await prisma.document.findFirst({
 			where: { documentId, userId },
 			select: {
-				id: true,
 				documentId: true,
 				fileName: true,
 				filePath: true,
@@ -77,11 +102,27 @@ export const documentService = {
 				size: true,
 				createdAt: true,
 				updatedAt: true,
-				user: {
-					select: { firstName: true, lastName: true },
-				},
+				user: { select: { firstName: true, lastName: true } },
 			},
 		});
+		if (!doc) return null;
+
+		const stats = await statsService.getQuickStatsForDocument(documentId);
+
+		return {
+			documentId: doc.documentId,
+			fileName: doc.fileName,
+			filePath: doc.filePath,
+			fileType: doc.fileType,
+			size: doc.size,
+			createdAt: doc.createdAt.toISOString(),
+			updatedAt: doc.updatedAt.toISOString(),
+			uploader: {
+				name: `${doc.user.firstName} ${doc.user.lastName}`,
+				avatar: null,
+			},
+			stats,
+		};
 	},
 
 	/**
@@ -182,6 +223,27 @@ export const documentService = {
 		if (!document) {
 			throw new ServiceError('Document not found or access denied.', 404);
 		}
+	},
+
+	/**
+	 * Generates a short-lived signed URL for a document the user owns.
+	 *
+	 * @param userId - The authenticated user ID.
+	 * @param documentId - The document’s cuid.
+	 * @throws ServiceError if document not found or not owned.
+	 */
+	async getSignedUrlForOwner(userId: string, documentId: string): Promise<string> {
+		// Verify ownership + fetch path
+		const doc = await prisma.document.findFirst({
+			where: { documentId, userId },
+			select: { filePath: true },
+		});
+		if (!doc) {
+			throw new ServiceError('Document not found or access denied.', 404);
+		}
+
+		// Delegate to storage service
+		return storageService.generateSignedUrl(doc.filePath, SIGNED_URL_TTL, STORAGE_BUCKET);
 	},
 
 	/**

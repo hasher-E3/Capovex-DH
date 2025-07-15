@@ -154,10 +154,7 @@ function InfoTableRow({ documentDetail, variant }: InfoTableRowProps) {
 					{formatDateTime(documentDetail.lastActivity)}
 				</TableCell>
 				<TableCell sx={{ width: '15%', textAlign: 'center' }}>{documentDetail.downloads}</TableCell>
-				<TableCell sx={{ width: '15%', textAlign: 'center' }}>{documentDetail.duration}</TableCell>
-				<TableCell sx={{ width: '15%', textAlign: 'center' }}>
-					{documentDetail.completion}
-				</TableCell>
+				<TableCell sx={{ width: '15%', textAlign: 'center' }}>{documentDetail.views}</TableCell>
 			</TableRow>
 		);
 	}

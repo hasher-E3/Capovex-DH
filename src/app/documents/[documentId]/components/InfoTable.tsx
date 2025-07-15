@@ -22,6 +22,7 @@ import InfoTableRow from './InfoTableRow';
 import { usePaginatedTable, useResponsivePageSize } from '@/hooks';
 import { useDocumentLinksQuery, useDocumentVisitorsQuery } from '@/hooks/data';
 import { Contact, LinkDetailRow } from '@/shared/models';
+import { useModalContext } from '@/providers/modal/ModalProvider';
 
 interface InfoTableProps {
 	variant: 'linkTable' | 'visitorTable';
@@ -30,6 +31,8 @@ interface InfoTableProps {
 
 // InfoTable - Renders either a "link table" or "visitor table" based on the `variant`.
 export default function InfoTable({ variant, documentId }: InfoTableProps) {
+	const { openModal } = useModalContext();
+
 	/* ── data fetch ─────────── */
 	const {
 		data: linkData = [],
@@ -47,6 +50,16 @@ export default function InfoTable({ variant, documentId }: InfoTableProps) {
 
 	const isPending = variant === 'linkTable' ? linksPending : visitorsPending;
 	const error = variant === 'linkTable' ? linksError : visitorsError;
+
+	const handleCreateLink = () =>
+		openModal({
+			type: 'linkCreate',
+			contentProps: {
+				documentId,
+				onLinkGenerated: (linkUrl: string) =>
+					openModal({ type: 'linkCopy', contentProps: { linkUrl } }),
+			},
+		});
 
 	/* ── sort + paging util ──────────── */
 	const {
@@ -86,8 +99,7 @@ export default function InfoTable({ variant, documentId }: InfoTableProps) {
 						{ key: 'visitor', label: 'VISITOR', width: '30%' },
 						{ key: 'lastActivity', label: 'LAST VIEWED', width: '25%', sortable: true },
 						{ key: 'downloads', label: 'DOWNLOADS', width: '15%' },
-						{ key: 'duration', label: 'DURATION', width: '15%' },
-						{ key: 'completion', label: 'COMPLETION', width: '15%' },
+						{ key: 'views', label: 'VIEWS', width: '15%' },
 					],
 		[variant],
 	);
@@ -151,8 +163,6 @@ export default function InfoTable({ variant, documentId }: InfoTableProps) {
 							/>
 						))}
 
-						{/* TODO: If linkTable has zero data, show "Create a link" row.
-          				    Note: "Create a link" button is currently disabled and non-functional. */}
 						{isTableEmpty && (
 							<TableRow>
 								<TableCell
@@ -161,7 +171,7 @@ export default function InfoTable({ variant, documentId }: InfoTableProps) {
 									{variant === 'linkTable' ? (
 										<Button
 											variant='contained'
-											disabled
+											onClick={handleCreateLink}
 											sx={{ px: { sm: 50, md: 60, lg: 70 } }}>
 											Create a link
 										</Button>

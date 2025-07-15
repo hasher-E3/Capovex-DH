@@ -35,6 +35,9 @@ export const queryKeys = {
 		/** Single document detail */
 		detail: (documentId: string) => ['documents', documentId] as const,
 
+		/** Short-lived signed URL for owner view */
+		signedUrl: (documentId: string) => ['documents', documentId, 'signedUrl'] as const,
+
 		/** Links that belong to a document */
 		links: (documentId: string) => ['documents', documentId, 'links'] as const,
 

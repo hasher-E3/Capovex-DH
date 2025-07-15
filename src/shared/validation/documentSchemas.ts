@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { QuickStatsSchema } from './analyticsSchemas';
 
 /* -------------------------------------------------------------------------- */
 /*  PATCH /documents/[documentId]                                             */
@@ -17,6 +18,7 @@ export const DocumentDetailResponseSchema = z.object({
 		createdAt: z.string(),
 		updatedAt: z.string(),
 		user: z.object({ firstName: z.string(), lastName: z.string() }),
+		stats: QuickStatsSchema,
 	}),
 });
 

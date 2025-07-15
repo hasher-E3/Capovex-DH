@@ -1,5 +1,6 @@
 import { FileType } from '@/shared/config/fileIcons';
 import { LinkDetailRow } from './linkModels';
+import { DocumentQuickStats } from './analyticsModels';
 
 /**
  * Represents a document stored in the system.
@@ -16,8 +17,6 @@ export interface DocumentType {
 		name: string;
 		avatar: string | null;
 	};
-	links: number; // The count of Link[]
-	viewers: number; // The sum of all LinkVisitors for all links
-	views: number; // Potential total doc views (0 if not tracked)
+	stats: DocumentQuickStats;
 	createdLinks?: LinkDetailRow[]; // If you want to store link details
 }

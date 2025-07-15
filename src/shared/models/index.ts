@@ -61,6 +61,7 @@ export type {
 	AnalyticsSummary,
 	DocumentLinkStat,
 	PERIOD_OPTIONS,
+	DocumentQuickStats,
 } from './analyticsModels';
 
 // Settings models and types

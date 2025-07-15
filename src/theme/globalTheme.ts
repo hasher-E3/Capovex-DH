@@ -217,44 +217,6 @@ const globalTheme = createTheme({
 				fontSize: '0.7rem',
 			},
 		}, //Custom name: note_lineHeight
-
-		//// Font sizes based on rem
-		// h1: { fontSize: '1.25rem', color: text.brand, fontWeight: 600 }, //Custom name: largeTitle_bold
-		// h2: { fontSize: '1rem', color: text.primary, fontWeight: 600 }, //Custom name: title_bold
-		// h3: { fontSize: '0.8rem', color: text.primary, fontWeight: 500 }, //Custom name: description_midBold
-		// h4: { fontSize: '0.8rem', color: text.primary, fontWeight: 600 }, //Custom name: description_bold
-		// h5: { fontSize: '0.7rem', color: text.primary, fontWeight: 600 }, //Custom name: note_bold
-		// h6: { fontSize: '0.7rem', color: text.secondary, fontWeight: 400 }, //Custom name: note_darkGray
-		// body1: { fontSize: '0.8rem', color: text.primary, fontWeight: 400 }, //Custom name: description
-		// body2: { fontSize: '0.7rem', color: text.notes, fontWeight: 400 }, //Custom name: note_gray
-		// subtitle1: { fontSize: '0.8rem', color: text.notes, fontWeight: 400 }, //Custom name: description_gray
-		// subtitle2: { fontSize: '0.8rem', color: text.secondary, fontWeight: 400 }, //Custom name: description_darkGray
-		// caption: {
-		// 	fontSize: '0.7rem',
-		// 	fontWeight: 400,
-		// 	color: text.notes,
-		// 	lineHeight: '20px',
-		// 	textAlign: 'left',
-		// }, //Custom name: note_lineHeight
-
-		//// Font sizes based on px
-		// h1: { fontSize: 20, color: text.brand, fontWeight: 600 },
-		// h2: { fontSize: 16, color: text.primary, fontWeight: 600 },
-		// h3: { fontSize: 17, color: text.primary, fontWeight: 600 },
-		// h4: { fontSize: 13, color: text.primary, fontWeight: 600 },
-		// h5: { fontSize: 11, color: text.primary, fontWeight: 600 },
-		// h6: { fontSize: 10, color: text.primary, fontWeight: 600 }, //Unused Currently
-		// body1: { fontSize: 13, color: text.secondary, fontWeight: 400 },
-		// body2: { fontSize: 11, color: text.notes, fontWeight: 400 },
-		// subtitle1: { fontSize: 13, color: text.notes, fontWeight: 400 },
-		// subtitle2: { fontSize: 13, color: text.secondary, fontWeight: 400 },
-		// caption: {
-		// 	fontSize: 11,
-		// 	fontWeight: 400,
-		// 	color: text.notes,
-		// 	lineHeight: '20px',
-		// 	textAlign: 'left',
-		// },
 	},
 	customShadows: {
 		menu: modalShadow,

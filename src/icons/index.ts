@@ -28,6 +28,9 @@ export { default as VideoIcon } from './files/VideoIcon';
 export { default as WordIcon } from './files/WordIcon';
 export { default as ZIPIcon } from './files/ZIPIcon';
 
+export { default as CreateLinkIcon } from './files/CreateLinkIcon';
+export { default as FilePreviewIcon } from './files/FilePreviewIcon';
+
 export { default as KeyIcon } from './security/KeyIcon';
 export { default as LockIcon } from './security/LockIcon';
 

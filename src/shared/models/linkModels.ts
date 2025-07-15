@@ -70,8 +70,7 @@ export interface Contact {
 	lastViewedLink: string; // The last link or friendly name they viewed
 	totalVisits: number; // Total visits for that email across the user's links
 	downloads: number; // Total downloads by this contact
-	duration: string; // Total or average duration (format depends on analytics)
-	completion: string; // Completion metric (format depends on analytics)
+	views: string; // Total Views by this contact
 }
 
 // =========== LINK VISITOR DETAIL ===========
