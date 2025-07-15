@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { logError } from '@/lib/logger';
 
-import { authService, systemSettingService } from '@/services';
+import { systemSettingService } from '@/services';
+import { authService } from '@/services/auth/authService';
+
+import { buildResetPasswordUrl } from '@/shared/utils/urlBuilderUtils';
 
 /** POST /api/auth/password/forgot  { email } */
 export async function POST(req: NextRequest) {
@@ -16,23 +19,10 @@ export async function POST(req: NextRequest) {
 			return NextResponse.json({ message: result.message }, { status: 400 });
 		}
 
-		/* Optional dev helper: show reset link when e‑mails disabled */
-		if (process.env.SEND_EMAILS !== 'true' && result.resetToken) {
-			const link = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${result.resetToken}`;
-			return NextResponse.json(
-				{
-					success: true,
-					message: 'Emails disabled; returning reset link for dev',
-					resetLink: link,
-				},
-				{ status: 201 },
-			);
-		}
-
 		// Dev helper: surface the link when Brevo is not configured
 		const brevoCfg = await systemSettingService.getBrevoConfig();
 		if (!brevoCfg && result.resetToken) {
-			const link = `${process.env.NEXT_PUBLIC_APP_URL}/auth/reset-password?token=${result.resetToken}`;
+			const link = buildResetPasswordUrl(result.resetToken);
 			return NextResponse.json(
 				{
 					success: true,

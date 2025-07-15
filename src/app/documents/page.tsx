@@ -10,7 +10,7 @@ import {
 	Typography,
 } from '@mui/material';
 
-import { authService } from '@/services';
+import { authService } from '@/services/auth/authService';
 
 import { BackgroundIcon, CheckCircleIcon } from '@/icons';
 

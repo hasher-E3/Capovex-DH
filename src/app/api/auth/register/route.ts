@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 import { logError } from '@/lib/logger';
 
-import { authService } from '@/services';
+import { authService } from '@/services/auth/authService';
 
 /** POST /api/auth/register */
 export async function POST(req: NextRequest) {

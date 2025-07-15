@@ -1,6 +1,8 @@
 import { ThemePreset, BgPreset } from '@/shared/config/brandingConfig';
 
-/** Row returned by GET /api/settings (mirrors DB) */
+/**
+ * Row returned by GET /api/settings (mirrors DB).
+ */
 export interface AccountSetting {
 	userId: string;
 	logoUrl: string | null;
@@ -13,7 +15,9 @@ export interface AccountSetting {
 	createdAt: string; // ISO
 }
 
-/** Payload accepted by PATCH /api/settings */
+/**
+ * Payload accepted by PATCH /api/settings.
+ */
 export interface UpdateAccountSettingPayload {
 	primaryColor?: string;
 	themePreset?: ThemePreset | null;
@@ -40,7 +44,9 @@ export interface SystemSettingDTO {
 	updatedAt: string; // ISO
 }
 
-/** Payload accepted by POST /api/settings/system */
+/**
+ * Payload accepted by POST /api/settings/system.
+ */
 export type SystemSettingsUpdatePayload = {
 	enableNotifications?: boolean;
 	brevoApiKey?: string;
@@ -52,6 +58,9 @@ export type SystemSettingsUpdatePayload = {
 	allowedMimeTypes?: string | null; // CSV
 };
 
+/**
+ * Payload for sending a test e-mail.
+ */
 export interface TestEmailPayload {
 	to: string;
 }

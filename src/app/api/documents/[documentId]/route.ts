@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService, documentService, createErrorResponse } from '@/services';
+import { documentService, createErrorResponse } from '@/services';
+import { authService } from '@/services/auth/authService';
+
 import { DocumentPatchSchema } from '@/shared/validation/documentSchemas';
 
 /**

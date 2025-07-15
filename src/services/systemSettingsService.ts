@@ -94,7 +94,7 @@ export const systemSettingService = {
 	 * @returns The updated system settings as a DTO.
 	 */
 	async updateSystemSettings(payload: SystemSettingsUpdatePayload): Promise<SystemSettingDTO> {
-		const current = await ensureRow();
+		await ensureRow();
 
 		const update: Record<string, any> = {};
 
@@ -132,7 +132,7 @@ export const systemSettingService = {
 	 * Throws if notifications are disabled or sender identity is not configured.
 	 * Decrypts the Brevo API key to ensure it is valid before sending.
 	 *
-	 * @param param0 - The test email payload containing the recipient address.
+	 * @param param - The test email payload containing the recipient address.
 	 * @throws ServiceError if notifications are disabled, sender identity is missing, or Brevo key is invalid.
 	 */
 	async sendTestEmail({ to }: TestEmailPayload): Promise<void> {
@@ -196,7 +196,13 @@ export const systemSettingService = {
 				emailFromAddr: true,
 			},
 		});
-		if (!row?.enableNotifications || !row.brevoApiKeyEnc) return null;
+		if (row?.enableNotifications) {
+			if (!row.brevoApiKeyEnc || !row.emailFromName || !row.emailFromAddr) {
+				throw new ServiceError('Notifications enabled but missing Brevo credentials', 500);
+			}
+		} else {
+			return null; // notifications disabled
+		}
 
 		// Cheap memoisation keyed by the ciphertext so we decrypt only when it changes
 		if (brevoCache && brevoCache.tag === row.brevoApiKeyEnc) return brevoCache.cachedEmailConfig;
