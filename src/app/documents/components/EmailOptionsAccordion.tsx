@@ -1,4 +1,4 @@
-import { SyntheticEvent } from 'react';
+import { useMemo } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
 import { Autocomplete, Box, Chip, Skeleton } from '@mui/material';
@@ -7,8 +7,8 @@ import { FormCheckbox, FormInput } from '@/components';
 
 import { useContactsQuery } from '@/hooks/data';
 
-import { DocumentLinkFormValues } from '@/shared/validation/documentLinkSchemas';
-import { validateEmails } from '@/shared/validation/validationUtils';
+import { handleEmailSelection } from '@/shared/utils';
+import { ContactOption, DocumentLinkFormValues } from '@/shared/validation/documentLinkSchemas';
 
 /**
  * “Sending” section — choose recipients for the link e-mail.
@@ -17,8 +17,6 @@ import { validateEmails } from '@/shared/validation/validationUtils';
 export default function EmailOptionsAccordion() {
 	const {
 		control,
-		register,
-		watch,
 		setValue,
 		formState: { errors },
 	} = useFormContext<DocumentLinkFormValues>();
@@ -29,28 +27,18 @@ export default function EmailOptionsAccordion() {
 
 	const { data: contacts = [], isLoading } = useContactsQuery();
 
-	const contactOptions = contacts
-		.filter((contact) => contact.email)
-		.map((contact, index) => ({
-			id: contact.id ?? index,
-			label: contact.email as string,
-		}));
-
-	const handleContactEmailsChange = (
-		event: SyntheticEvent,
-		newSelection: { id?: number; label: string }[],
-		onChange: (value: unknown) => void,
-	) => {
-		const uniqueSelection = Array.from(
-			new Map(newSelection.map((item) => [item.id, item])).values(),
-		);
-		onChange(uniqueSelection);
-	};
-
-	const sanitizeOtherEmails = (emails: string) => {
-		const { validEmails } = validateEmails(emails);
-		setValue('otherEmails', validEmails.join(', '), { shouldValidate: true });
-	};
+	const contactOptions: ContactOption[] = useMemo(
+		() =>
+			contacts
+				.filter((contact) => contact.email)
+				.map((contact, index) => ({
+					id: contact.id ?? index,
+					email: contact.email,
+					label: contact.name ? `${contact.name} <${contact.email}>` : contact.email,
+					name: contact.name ?? '',
+				})),
+		[contacts],
+	);
 
 	const LoadingSkeleton = () => (
 		<Box
@@ -81,6 +69,7 @@ export default function EmailOptionsAccordion() {
 				mb={8}
 				ml={13}>
 				<Controller
+					disabled={!selectFromContact || isPublicLink}
 					control={control}
 					name='contactEmails'
 					render={({ field: { value, onChange } }) => (
@@ -93,16 +82,32 @@ export default function EmailOptionsAccordion() {
 								(option) => !value.some((selected) => selected.id === option.id),
 							)}
 							value={value}
-							getOptionLabel={(option) => option.label}
+							getOptionLabel={(option) => option.label ?? option.email}
 							disabled={!selectFromContact || isPublicLink}
-							onChange={(event, newValue) => handleContactEmailsChange(event, newValue, onChange)}
+							onChange={(event, newValue) =>
+								handleEmailSelection(newValue, onChange, (c) => (c as ContactOption).email)
+							}
+							renderOption={(props, option) => (
+								<li {...props}>
+									<Box
+										component='span'
+										sx={{ fontWeight: 500, mr: 10 }}>
+										{option.name}
+									</Box>
+									<Box
+										component='span'
+										sx={{ color: 'text.notes' }}>
+										&lt;{option.email}&gt;
+									</Box>
+								</li>
+							)}
 							renderTags={(tagValue, getTagProps) =>
 								tagValue.map((option, index) => {
 									const { key, ...restProps } = getTagProps({ index });
 									return (
 										<Chip
 											key={key}
-											label={option.label}
+											label={option.label ?? option.email}
 											{...restProps}
 											size='small'
 										/>
@@ -115,7 +120,12 @@ export default function EmailOptionsAccordion() {
 									id='searchContactEmails'
 									placeholder='Search contacts'
 									autoComplete='off'
-									slotProps={{ input: { autoComplete: 'new-password' } }}
+									sx={{ overflowY: 'auto', maxHeight: 100 }}
+									slotProps={{
+										input: {
+											autoComplete: 'new-password',
+										},
+									}}
 								/>
 							)}
 						/>
@@ -132,16 +142,52 @@ export default function EmailOptionsAccordion() {
 
 			<Box
 				my={3}
-				ml={13}>
-				<FormInput
-					id='otherEmails'
-					type='text'
-					placeholder='Enter e-mails, separated by commas'
-					fullWidth
-					disabled={!sendToOthers || isPublicLink}
-					{...register('otherEmails')}
-					errorMessage={errors.otherEmails?.message as string}
-					onBlur={(event) => sanitizeOtherEmails(event.target.value)}
+				ml={13}
+				maxHeight={200}>
+				<Controller
+					control={control}
+					name='otherEmails'
+					render={({ field: { value, onChange } }) => (
+						<Autocomplete
+							multiple
+							freeSolo
+							filterSelectedOptions
+							options={[]} // freeSolo ⇒ no fixed list
+							value={value}
+							open={false}
+							disabled={!sendToOthers || isPublicLink}
+							onChange={(event, newValue) =>
+								handleEmailSelection(newValue, onChange, (e) => e as string, true)
+							}
+							renderTags={(tagValue, getTagProps) =>
+								tagValue.map((email, idx) => {
+									const { key, ...restProps } = getTagProps({ index: idx });
+									return (
+										<Chip
+											key={key}
+											label={email}
+											{...restProps}
+											size='small'
+										/>
+									);
+								})
+							}
+							renderInput={(params) => (
+								<FormInput
+									{...params}
+									id='otherEmailsField'
+									placeholder='Type e-mail and press Enter'
+									autoComplete='off'
+									sx={{ overflowY: 'auto', maxHeight: 100 }}
+									slotProps={{
+										input: {
+											autoComplete: 'new-password',
+										},
+									}}
+								/>
+							)}
+						/>
+					)}
 				/>
 			</Box>
 		</Box>

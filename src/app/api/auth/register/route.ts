@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/services';
+
+import { logError } from '@/lib/logger';
+
+import { authService } from '@/services/auth/authService';
 
 /** POST /api/auth/register */
 export async function POST(req: NextRequest) {
@@ -18,7 +21,7 @@ export async function POST(req: NextRequest) {
 
 		return NextResponse.json({ message: result.message }, { status: 201 });
 	} catch (err) {
-		console.error('[register]', err);
+		logError('[register]', err);
 		return NextResponse.json({ message: 'Server error' }, { status: 500 });
 	}
 }

@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService, createErrorResponse, documentService, storageService } from '@/services';
-import { buildLinkUrl } from '@/shared/utils';
+import { createErrorResponse, documentService, storageService } from '@/services';
+import { authService } from '@/services/auth/authService';
+
+import { buildDocumentLinkUrl } from '@/shared/utils';
 
 /**
  * GET /api/documents
@@ -19,7 +21,7 @@ export async function GET(req: NextRequest) {
 
 			const createdLinks = doc.documentLinks.map((link) => ({
 				linkId: link.documentLinkId,
-				createdLink: buildLinkUrl(link.documentLinkId),
+				createdLink: buildDocumentLinkUrl(link.documentLinkId),
 				lastViewed: link.updatedAt,
 				linkViews: 0,
 			}));
@@ -65,7 +67,7 @@ export async function POST(req: NextRequest) {
 
 		// Validate file with environment constraints
 		try {
-			documentService.validateUploadFile(file);
+			await documentService.validateUploadFile(file);
 		} catch (err) {
 			if (err instanceof Error) {
 				if (err.message === 'INVALID_FILE_TYPE') {

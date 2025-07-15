@@ -9,8 +9,8 @@ import FilterToggle from './FilterToggle';
 import UserTable from './UserTable';
 
 import { useToast } from '@/hooks';
+import { User } from './UserTable';
 
-import { User } from '@/shared/models';
 import { useModalContext } from '@/providers/modal/ModalProvider';
 
 export default function TeamClient() {

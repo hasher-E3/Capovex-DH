@@ -1,7 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { NextRequest, NextResponse } from 'next/server';
+
 import { authOptions } from '@/lib/authOptions';
-import { authService } from '@/services';
+import { logError } from '@/lib/logger';
+
+import { authService } from '@/services/auth/authService';
+
 import { ChangePasswordSchema } from '@/shared/validation/profileSchemas';
 
 export async function PATCH(req: NextRequest) {
@@ -34,7 +38,7 @@ export async function PATCH(req: NextRequest) {
 
 		return NextResponse.json({ message: result.message }, { status: 200 });
 	} catch (err) {
-		console.error('[PATCH /api/profile/password]', err);
+		logError('[PATCH /api/profile/password]', err);
 		return NextResponse.json({ message: 'Server error' }, { status: 500 });
 	}
 }

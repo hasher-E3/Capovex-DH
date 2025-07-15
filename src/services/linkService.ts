@@ -1,29 +1,52 @@
 import bcryptjs from 'bcryptjs';
 import { randomUUID } from 'crypto';
 
+import { logWarn } from '@/lib/logger';
 import prisma from '@/lib/prisma';
 import { Prisma } from '@prisma/client';
 
-import { SupabaseProvider } from '@/services/storage/supabase/supabaseStorageProvider';
-import { buildLinkUrl } from '@/shared/utils';
-import { ServiceError } from './errorService';
+import {
+	brandingService,
+	notificationService,
+	ServiceError,
+	storageService,
+	systemSettingService,
+} from '@/services';
+
+import { ShareLinkRecipient } from '@/shared/models';
+import { buildDocumentLinkUrl } from '@/shared/utils';
 
 export const linkService = {
 	/**
-	 * Lists all links for a specific document, ensuring ownership.
+	 * Retrieves all links for a specific document, ensuring the requesting user owns the document.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentId - The unique identifier of the document.
+	 * @returns An array of document links if found, or null if the document is not found or not owned by the user.
 	 */
 	async getDocumentLinks(userId: string, documentId: string) {
-		// Ensure doc ownership
 		const doc = await prisma.document.findFirst({
 			where: { documentId, userId },
 			include: { documentLinks: true },
 		});
-		if (!doc) return null; // doc not found or no access
+		if (!doc) return null;
 		return doc.documentLinks;
 	},
 
 	/**
 	 * Creates a new link for the specified document if the user owns it.
+	 *
+	 * @param userId      - The unique identifier of the user creating the link.
+	 * @param documentId  - The unique identifier of the document to link.
+	 * @param options     - Options for link creation, including:
+	 *   - alias: Optional custom alias for the link.
+	 *   - isPublic: Whether the link is public (default: false).
+	 *   - password: Optional password for link protection.
+	 *   - expirationTime: Optional ISO string for link expiration.
+	 *   - visitorFields: Array of visitor field keys to collect.
+	 *   - recipients: Array of email addresses to notify.
+	 * @returns The created document link with a generated URL.
+	 * @throws ServiceError if the document is not found, expiration is in the past, or alias conflicts.
 	 */
 	async createLinkForDocument(
 		userId: string,
@@ -34,23 +57,40 @@ export const linkService = {
 			password?: string;
 			expirationTime?: string;
 			visitorFields?: string[];
+			recipients?: ShareLinkRecipient[];
 		},
 	) {
-		const { alias, isPublic = false, password, expirationTime, visitorFields = [] } = options;
+		const {
+			alias,
+			isPublic = false,
+			password,
+			expirationTime,
+			visitorFields = [],
+			recipients = [],
+		} = options;
 		return prisma.$transaction(async (tx) => {
-			// Check doc ownership
+			// Ensure the document exists and is owned by the user
 			const doc = await tx.document.findFirst({
 				where: { documentId, userId },
-				select: { documentId: true },
+				select: { documentId: true, fileName: true },
 			});
+
 			if (!doc) throw new ServiceError('DOCUMENT_NOT_FOUND', 404);
 
-			// Validate expiration time
+			// Validate expiration time if provided
 			if (expirationTime && new Date(expirationTime) < new Date()) {
 				throw new ServiceError('EXPIRATION_PAST', 400);
 			}
+			let finalExpiration: Date | null = null;
+			if (expirationTime) {
+				finalExpiration = new Date(expirationTime);
+			} else {
+				// Use default TTL from system settings if not provided
+				const ttl = (await systemSettingService.getSystemSettings()).defaultTtlSeconds;
+				finalExpiration = new Date(Date.now() + ttl * 1_000);
+			}
 
-			// Generate link details
+			// Generate unique link ID and hash password if provided
 			const slug = randomUUID(); // <- documentLinkId
 			const hashedPassword = password ? await bcryptjs.hash(password, 10) : null;
 
@@ -63,23 +103,46 @@ export const linkService = {
 						alias: alias?.trim() || null,
 						isPublic,
 						password: hashedPassword,
-						expirationTime: expirationTime ? new Date(expirationTime) : null,
+						expirationTime: finalExpiration,
 						visitorFields,
 					},
 				});
-				// Return with fresh URL (in case HOST differs by env)
-				return { ...created, linkUrl: buildLinkUrl(slug) };
+
+				const linkUrl = buildDocumentLinkUrl(slug);
+				const senderName = await brandingService.getDisplayName(userId);
+				// Send share-link e-mails (fire-and-forget – don’t block transaction)
+				if (recipients.length) {
+					console.warn('[linkService] Sending share link emails to:', recipients);
+					// Ensure unique recipients by email
+					notificationService
+						.sendShareLink({
+							recipients,
+							url: linkUrl,
+							fileName: doc.fileName,
+							senderName,
+						})
+						.catch((e) => logWarn('[linkService] sendShareLink failed:', e));
+				}
+
+				// Return the created link with a fresh URL (in case HOST differs by env)
+				return { ...created, linkUrl };
 			} catch (err) {
+				// Handle unique constraint violation on (documentId, alias)
 				if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-					// Collision on (documentId, alias)
 					throw new ServiceError('LINK_ALIAS_CONFLICT', 409);
 				}
 				throw err;
 			}
 		});
 	},
+
 	/**
 	 * Deletes a link if it belongs to the user.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @param documentLinkId - The unique identifier of the document link.
+	 * @returns The deleted document link record.
+	 * @throws ServiceError if the link is not found or not owned by the user.
 	 */
 	async deleteLink(userId: string, documentLinkId: string) {
 		const link = await prisma.documentLink.findFirst({
@@ -93,8 +156,10 @@ export const linkService = {
 	},
 
 	/**
-	 * Retrieves a link (no user auth required), checks if it exists.
-	 * If expired, caller can handle. Returns the raw link record.
+	 * Retrieves a public link by its identifier.
+	 *
+	 * @param linkId - The public link identifier.
+	 * @returns The document link record if found, otherwise null.
 	 */
 	async getPublicLink(linkId: string) {
 		return prisma.documentLink.findUnique({
@@ -103,7 +168,11 @@ export const linkService = {
 	},
 
 	/**
-	 * Verifies a link's password if it exists, returning true if valid or no password.
+	 * Verifies a link's password if it exists, returning true if valid or if no password is set.
+	 *
+	 * @param link - The link object containing the password hash or null.
+	 * @param providedPassword - The password provided by the user.
+	 * @returns True if the password is valid or not required, false otherwise.
 	 */
 	async verifyLinkPassword(
 		link: { password: string | null },
@@ -126,6 +195,7 @@ export const linkService = {
 	 * @param password  - The password submitted (if any).
 	 * @param options   - Optional settings, e.g. { skipPasswordCheck: true }.
 	 * @returns The link record if accessible, or throws a ServiceError.
+	 * @throws ServiceError if link not found, expired, or password invalid.
 	 */
 	async validateLinkAccess(
 		linkId: string,
@@ -149,8 +219,15 @@ export const linkService = {
 	},
 
 	/**
-	 * Logs a new record in LinkVisitors for this link
-	 * @returns the created row or `null` when skipped (public link).
+	 * Logs a new record in LinkVisitors for this link.
+	 * Skips logging if the link is public.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @param firstName - The visitor's first name (optional).
+	 * @param lastName - The visitor's last name (optional).
+	 * @param email - The visitor's email address (optional).
+	 * @param visitorMetaData - Additional metadata about the visitor.
+	 * @returns The created visitor record, or null if logging is skipped.
 	 */
 	async logVisitor(
 		linkId: string,
@@ -171,7 +248,12 @@ export const linkService = {
 	},
 
 	/**
-	 * Retrieves all visitors who accessed a specific link under this document.
+	 * Retrieves all visitors who accessed a specific link under a document, ensuring ownership.
+	 *
+	 * @param userId     - The unique identifier of the user.
+	 * @param documentId - The unique identifier of the document.
+	 * @param linkId     - The unique identifier of the document link.
+	 * @returns An array of visitor records, or null if the link is not found or not owned by the user.
 	 */
 	async getDocumentLinkVisitors(userId: string, documentId: string, linkId: string) {
 		// Ensure the link belongs to the specified document and user (i.e., verify ownership)
@@ -180,7 +262,7 @@ export const linkService = {
 		});
 		if (!link) return null; // link not found or no access
 
-		// Query link visitors
+		// Query link visitors, ordered by most recent visit
 		return prisma.documentLinkVisitor.findMany({
 			where: { documentLinkId: linkId },
 			orderBy: { visitedAt: 'desc' },
@@ -190,6 +272,10 @@ export const linkService = {
 	/**
 	 * Generates a signed file URL for the Document associated with this link,
 	 * checking if the link is expired. Throws if link invalid/expired.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @returns An object containing the signed URL, file name, size, file type, and document ID.
+	 * @throws ServiceError if the link or document is not found, or if the link is expired.
 	 */
 	async getSignedFileFromLink(linkId: string): Promise<{
 		signedUrl: string;
@@ -206,7 +292,7 @@ export const linkService = {
 			throw new ServiceError('Link not found', 404);
 		}
 
-		const defaultTtl = Number(process.env.DEFAULT_TTL) || 86_400; // 24 h fallback
+		const { defaultTtlSeconds: defaultTtl } = await systemSettingService.getSystemSettings();
 		let expiresIn = defaultTtl;
 
 		if (link.expirationTime) {
@@ -219,8 +305,7 @@ export const linkService = {
 			expiresIn = Math.min(defaultTtl, secondsUntilLinkExpires);
 		}
 
-		const supabaseProvider = new SupabaseProvider();
-		const signedUrl = await supabaseProvider.generateSignedUrl(link.document.filePath, expiresIn);
+		const signedUrl = await storageService.generateSignedUrl(link.document.filePath, expiresIn);
 
 		return {
 			signedUrl,
@@ -232,9 +317,12 @@ export const linkService = {
 	},
 
 	/**
-	 * Lightweight meta fetch used by the public GET route.
-	 * – does *not* log analytics
-	 * – throws ServiceError if link invalid / expired
+	 * Fetches lightweight metadata for a link, used by the public GET route.
+	 * Does not log analytics. Throws if the link is invalid or expired.
+	 *
+	 * @param linkId - The unique identifier of the document link.
+	 * @returns An object containing password protection status, visitor fields, and (if public and unrestricted) signed file metadata.
+	 * @throws ServiceError if the link is not found or expired.
 	 */
 	async getLinkMeta(linkId: string) {
 		const link = await prisma.documentLink.findUnique({
@@ -261,5 +349,64 @@ export const linkService = {
 		}
 
 		return baseMeta;
+	},
+
+	/**
+	 * Retrieves a user's contacts based on unique visitor e-mails across all their links.
+	 * Each contact includes the most recent name, last viewed link, last activity, and total visits.
+	 *
+	 * @param userId - The unique identifier of the user.
+	 * @returns An array of contact objects with name, email, last viewed link, last activity, and total visits.
+	 */
+	async getUserContacts(userId: string) {
+		// Get all link IDs created by the user
+		const links = await prisma.documentLink.findMany({
+			where: { createdByUserId: userId },
+			select: { documentLinkId: true },
+		});
+		if (!links.length) return [];
+
+		const linkIds = links.map((l) => l.documentLinkId);
+
+		// Group visitors by email, get visit count and last activity
+		const visitors = await prisma.documentLinkVisitor.groupBy({
+			by: ['email'],
+			where: { documentLinkId: { in: linkIds } },
+			_count: { email: true },
+			_max: { updatedAt: true },
+		});
+
+		// For each unique email, fetch the most recent name and last viewed link
+		const details = await Promise.all(
+			visitors.map(async (v) => {
+				const last = await prisma.documentLinkVisitor.findFirst({
+					where: {
+						email: v.email,
+						documentLinkId: { in: linkIds },
+						OR: [{ firstName: { not: '' } }, { lastName: { not: '' } }],
+					},
+					orderBy: { updatedAt: 'desc' },
+					include: { documentLink: true },
+				});
+				if (!last) return null;
+
+				const first = last.firstName?.trim() || '';
+				const lastName = last.lastName?.trim() || '';
+				const name = first || lastName ? `${first} ${lastName}`.trim() : null;
+
+				return {
+					id: last.id,
+					name,
+					email: v.email,
+					lastViewedLink:
+						last.documentLink?.alias || buildDocumentLinkUrl(last.documentLink?.documentLinkId),
+					lastActivity: last.updatedAt,
+					totalVisits: v._count.email,
+				};
+			}),
+		);
+
+		// Filter out contacts without both email and name
+		return details.filter((c) => c && c.email && c.name);
 	},
 };

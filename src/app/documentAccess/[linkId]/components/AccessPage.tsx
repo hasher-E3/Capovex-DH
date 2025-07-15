@@ -150,7 +150,7 @@ export default function AccessPage({ linkId }: Props) {
 				}
 			}
 		}
-	}, [isLoading, hasInitialized, linkInfo, handleSubmit]);
+	}, [isLoading, hasInitialized, linkInfo, handleSubmit, openModal, linkId]);
 
 	const handleVisitorModalSubmit = (file: PublicLinkFilePayload) => setLinkData(file);
 

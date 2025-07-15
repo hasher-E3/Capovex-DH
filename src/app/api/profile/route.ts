@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService } from '@/services';
+import { logError } from '@/lib/logger';
 import prisma from '@/lib/prisma';
+
+import { authService } from '@/services/auth/authService';
 
 export async function GET(req: NextRequest) {
 	try {
@@ -32,7 +34,7 @@ export async function GET(req: NextRequest) {
 			{ status: 200 },
 		);
 	} catch (error) {
-		console.error('Error fetching user info:', error);
+		logError('Error fetching user info:', error);
 		return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
 	}
 }

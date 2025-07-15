@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService, analyticsService, createErrorResponse, documentService } from '@/services';
+import { analyticsService, createErrorResponse, documentService } from '@/services';
+import { authService } from '@/services/auth/authService';
+
 import { AnalyticsPeriodSchema } from '@/shared/validation/analyticsSchemas';
 
 /**

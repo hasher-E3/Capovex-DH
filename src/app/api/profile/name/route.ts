@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+
+import { authService } from '@/services/auth/authService';
+
+import { logDebug, logError } from '@/lib/logger';
+
 import { ChangeNameSchema } from '@/shared/validation/profileSchemas';
-import { authService } from '@/services';
 
 export async function PATCH(req: NextRequest) {
 	try {
@@ -19,11 +23,11 @@ export async function PATCH(req: NextRequest) {
 
 		const result = await authService.changeName({ userId, payload: { firstName, lastName } });
 
-		console.log('🚀 ~ PATCH ~ result:', result);
+		logDebug('🚀 ~ PATCH ~ result:', result);
 
 		return NextResponse.json({ message: result.message }, { status: result.success ? 200 : 400 });
 	} catch (err) {
-		console.error('[PATCH /api/profile/name]', err);
+		logError('[PATCH /api/profile/name]', err);
 		return NextResponse.json({ message: 'Server error' }, { status: 500 });
 	}
 }

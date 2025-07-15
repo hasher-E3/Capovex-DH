@@ -1,7 +1,11 @@
 /**
- * Public model types shared across client, API routes and back-end services.
+ * Barrel file for shared model types.
+ *
+ * Exports all public model types used across client, API routes, and backend services.
+ * This ensures a single source of truth for data contracts and DTOs throughout the application.
  */
 
+// Auth models and types
 export * from './authModels';
 export type {
 	ChangeNameRequest,
@@ -20,24 +24,24 @@ export type {
 	VerifyUserResponse,
 } from './authModels';
 
+// Document models and types
 export * from './documentModels';
-export type { BarDataItem, DocumentType } from './documentModels';
+export type { DocumentType } from './documentModels';
 
+// Link models and types
 export * from './linkModels';
 export type {
-	CreateDocumentLinkPayload,
-	DocumentLink,
-	PublicLinkFilePayload as FileDisplayPayload,
-	InviteRecipientsPayload,
+	PublicLinkFilePayload,
 	LinkDetailRow,
-	LinkFormValues,
 	PublicLinkMetaResponse,
 	PublicLinkMeta,
+	Contact,
+	LinkVisitor,
+	ShareLinkRecipient,
+	LinkAccessState,
 } from './linkModels';
 
-export * from './userModels';
-export type { Contact, User } from './userModels';
-
+// Profile models and types
 export * from './profileModels';
 export type {
 	ProfileDto,
@@ -47,8 +51,7 @@ export type {
 	UpdatePasswordResponse,
 } from './profileModels';
 
-export type { LinkVisitor } from './userModels';
-
+// Analytics models and types
 export * from './analyticsModels';
 export type {
 	ANALYTICS_PERIODS,
@@ -60,5 +63,12 @@ export type {
 	PERIOD_OPTIONS,
 } from './analyticsModels';
 
+// Settings models and types
 export * from './settingsModels';
-export type { AccountSetting, UpdateAccountSettingPayload } from './settingsModels';
+export type {
+	AccountSetting,
+	UpdateAccountSettingPayload,
+	TestEmailPayload,
+	SystemSettingsUpdatePayload,
+	SystemSettingDTO,
+} from './settingsModels';

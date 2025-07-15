@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { ServiceError, storageService } from '@/services';
+import { ServiceError, storageService, systemSettingService } from '@/services';
 
 export const documentService = {
 	/**
@@ -185,25 +185,33 @@ export const documentService = {
 	},
 
 	/**
-	 * Validates the file type and size against environment variables:
-	 * - ALLOWED_FILE_TYPES (comma-separated, e.g. "pdf,jpg,png")
-	 * - MAX_FILE_SIZE_MB (e.g. "1" => 1 MB)
+	 * Validates the file type and size against system settings or environment variables.
+	 * - Allowed MIME types from system settings or environment variables.
+	 * - Maximum file size in MB from system settings or environment variables.
 	 *
 	 * @param file - The file object to validate.
 	 * @throws ServiceError if the file type is not allowed or the file is too large.
 	 */
-	validateUploadFile(file: File) {
-		// 1) Validate MIME type based on ALLOWED_FILE_TYPES
-		const allowedTypes = process.env.ALLOWED_FILE_TYPES?.split(',') || [];
-		if (!allowedTypes.includes(file.type)) {
-			throw new ServiceError('INVALID_FILE_TYPE', 400);
+	async validateUploadFile(file: File) {
+		const { maxFileSizeMb, allowedMimeTypes } = await systemSettingService.getUploadLimits();
+
+		const whitelist = (allowedMimeTypes ?? []).filter(Boolean);
+
+		// If no allowed types are configured, allow all types
+		if (whitelist.length && !whitelist.includes(file.type)) {
+			throw new ServiceError(
+				`INVALID_FILE_TYPE: ${file.type} is not allowed. Allowed types: ${whitelist.join(', ')}`,
+				400,
+			);
 		}
 
-		// 2) Validate file size
-		const maxSizeMB = parseInt(process.env.MAX_FILE_SIZE_MB || '1', 10);
 		const fileSizeMB = file.size / (1024 * 1024);
-		if (fileSizeMB > maxSizeMB) {
-			throw new ServiceError('FILE_TOO_LARGE', 413);
+		const limit = maxFileSizeMb ?? 1;
+		if (fileSizeMB > limit) {
+			throw new ServiceError(
+				`FILE_TOO_LARGE: ${fileSizeMB.toFixed(2)}MB exceeds limit of ${limit}MB`,
+				413,
+			);
 		}
 	},
 };

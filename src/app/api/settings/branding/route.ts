@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-import { authService, brandingService, createErrorResponse } from '@/services';
+import { brandingService, createErrorResponse } from '@/services';
+import { authService } from '@/services/auth/authService';
+
 import { UpdateAccountSettingSchema } from '@/shared/validation/settingSchemas';
 
 /**

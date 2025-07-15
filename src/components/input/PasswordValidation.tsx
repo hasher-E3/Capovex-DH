@@ -9,7 +9,7 @@ import { FC } from 'react';
 import { Box, Typography } from '@mui/material';
 
 import { CheckCircleIcon, XCircleIcon } from '@/icons';
-import { getPasswordChecks } from '@/shared/validation/validationUtils';
+import { getPasswordChecks } from '@/shared/utils';
 
 interface PasswordValidationProps {
 	/** Current password text from the parent form */

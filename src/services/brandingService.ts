@@ -70,6 +70,18 @@ export const brandingService = {
 	},
 
 	/**
+	 * Returns the user’s public‐facing display name or `null`
+	 * if the user chose not to expose personal info.
+	 * @param userId - The user's unique identifier.
+	 * @returns The user's display name if available, otherwise `null`.
+	 */
+	async getDisplayName(userId: string): Promise<string | null> {
+		const accountSettings = await brandingService.getAccountSettings(userId);
+		return accountSettings.showPersonalInfo && accountSettings.displayName?.trim()
+			? accountSettings.displayName.trim()
+			: null;
+	},
+	/**
 	 * Updates the account settings for a user, including scalar fields and optional logo file upload.
 	 *
 	 * @param userId - The user's unique identifier.
@@ -95,7 +107,15 @@ export const brandingService = {
 		// Logo upload
 		if (data.logoFile) {
 			const { buffer, mimeType, originalName } = data.logoFile;
-			if (!mimeType.startsWith('image/')) {
+			const MAX_SIZE = 2 * 1024 * 1024;
+			const validImageFormats = ['image/png', 'image/jpeg', 'image/svg+xml'];
+
+			// Validate image size
+			if (buffer.length > MAX_SIZE) {
+				throw new ServiceError('FILE_TOO_LARGE', 413);
+			}
+			// Validate image type
+			if (!validImageFormats.includes(mimeType.toLowerCase())) {
 				throw new ServiceError('INVALID_IMAGE_TYPE', 415);
 			}
 
@@ -117,6 +137,8 @@ export const brandingService = {
 
 			updates.logoUrl = `${userId}/${objectKey}`;
 		}
+		// If no updates were made, return the current settings
+		if (Object.keys(updates).length === 0) return current;
 
 		// Database update
 		return prisma.accountSetting.update({

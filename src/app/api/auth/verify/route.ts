@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { authService } from '@/services';
+import { authService } from '@/services/auth/authService';
 
 /** GET /api/auth/verify?token=abc */
 export async function GET(req: NextRequest) {

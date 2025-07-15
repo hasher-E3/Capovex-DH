@@ -58,7 +58,7 @@ export default function LinkCreateModal({
 		successMessage: 'Link created successfully!',
 		onError: (error) => {
 			const message = error || 'Failed to create link. Please try again.';
-			console.log(error);
+
 			toast.showToast({
 				message,
 				variant: 'error',
@@ -115,11 +115,11 @@ export default function LinkCreateModal({
 							flexDirection='column'
 							gap={5}>
 							<FormInput
-								label='Link alias'
+								label='Link Alias'
 								minWidth={460}
 								{...register('alias')}
 								errorMessage={errors.alias?.message as string}
-								placeholder='Enter alias'
+								placeholder='Enter an alias'
 							/>
 
 							<FormCheckbox

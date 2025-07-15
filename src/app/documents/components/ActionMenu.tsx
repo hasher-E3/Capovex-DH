@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+import { logDebug } from '@/lib/logger';
+
 import { Menu, MenuItem, Typography } from '@mui/material';
 
 import CreateLink from './CreateLink';
@@ -79,7 +81,7 @@ export default function ActionMenu({
 				title: 'Update with a new document',
 				description: 'When you update with a new document, the current link won’t change.',
 				onUploadComplete: () => {
-					console.log('Document updated successfully!');
+					logDebug('Document updated successfully!');
 					showToast({
 						message: 'Document updated successfully!',
 						variant: 'success',

@@ -21,6 +21,7 @@ import type {
 } from '@/shared/models';
 
 import type { IAuth } from './IAuth';
+import { buildResetPasswordUrl, buildVerificationUrl } from '@/shared/utils/urlBuilderUtils';
 
 export class LocalAuthAdapter implements IAuth {
 	async signUp(request: SignUpRequest): Promise<SignUpResponse> {
@@ -47,7 +48,8 @@ export class LocalAuthAdapter implements IAuth {
 			},
 		});
 
-		await emailService.sendVerificationEmail(user.email, verificationToken, firstName);
+		const verificationLink = buildVerificationUrl(verificationToken);
+		await emailService.sendVerificationEmail(user.email, verificationLink, firstName);
 
 		return {
 			success: true,
@@ -69,7 +71,9 @@ export class LocalAuthAdapter implements IAuth {
 			},
 		});
 
-		await emailService.sendResetPasswordEmail(email, resetToken);
+		const resetLink = buildResetPasswordUrl(resetToken);
+
+		await emailService.sendResetPasswordEmail(email, resetLink);
 
 		// Remove resetToken in production
 		return {
@@ -161,6 +165,7 @@ export class LocalAuthAdapter implements IAuth {
 
 		return { success: true, message: 'Email verified', statusCode: 200 };
 	}
+
 	async changeName(request: ChangeNameRequest): Promise<ChangeNameResponse> {
 		const { userId, payload } = request;
 		const { firstName, lastName } = payload;

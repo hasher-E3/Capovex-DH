@@ -10,8 +10,7 @@ import { z } from 'zod';
  */
 
 import { VisitorFieldKey, visitorFieldKeys } from '@/shared/config/visitorFieldsConfig';
-import { PASSWORD_RULES } from '@/shared/validation/validationUtils';
-import { splitName } from '@/shared/utils/stringUtils';
+import { PASSWORD_RULES, splitName } from '@/shared/utils/';
 import type { PublicLinkAccessPayload } from '@/shared/validation/publicLinkSchemas'; // server-side type
 
 /* -------------------------------------------------------------------------- */
