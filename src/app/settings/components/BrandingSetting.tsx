@@ -1,73 +1,112 @@
 'use client';
 
-import { useState, MouseEvent } from 'react';
-import { Avatar, Box, Button, CircularProgress, Link, Typography } from '@mui/material';
+import { ChangeEvent, MouseEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { Box, MenuItem, Select, Typography, Link } from '@mui/material';
 import Grid from '@mui/material/Grid2';
 
 import { useToast } from '@/hooks';
-// ***** Modals V2 (Typed Global System) *****
 import { useModalContext } from '@/providers/modal/ModalProvider';
-// ***** Legacy Approach: ModalWrapper (Commented Out) *****
-// import { ModalWrapper } from '@/components';
-// import { useModal } from '@/hooks';
 
 import ColorPickerBox from './ColorPickerBox';
 
-import { PencilIcon } from '@/icons';
 import AvatarCard from '@/components/common/AvatarCard';
-/**
- * NOTE FOR DEVELOPERS:
- * =====================
- * This file has been updated to use our new typed modals approach.
- * I have commented out the old 'ModalWrapper' usage at the bottom so you can see how it was before.
- *
- * - "Modals V2" uses a typed global system: openModal({ type: ... }),
- *   defined in ModalProvider + ModalContainer + ModalRegistry.
- * - The old usage used: useModal() + <ModalWrapper variant="..." />
- *
- * TEMPORARY: Once the entire project is migrated to the new approach,
- * we can safely remove the old references and these explanatory comments.
- * ============================================================
- */
+import { Controller, FormProvider } from 'react-hook-form';
+import { useAccountSettingsQuery, useUpdateAccountSettingsMutation } from '@/hooks/data';
+import { useFormSubmission, useSettingForm } from '@/hooks/forms';
+import { FormInput, LoadingButton, LoadingSpinner } from '@/components';
+
+import { parseFileSize } from '@/shared/utils';
+import { BG_PRESETS, BgPreset, THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
+
 export default function BrandingSetting() {
 	const { showToast } = useToast();
-
-	const [loading, setLoading] = useState(false);
-
-	/**
-	 * ==============================
-	 * OLD MODAL LOGIC (commented usage)
-	 * ==============================
-	 * We keep them commented out so devs can see how it worked before.
-	 */
-	// const deleteModal = useModal();
-	// const uploadModal = useModal();
-
-	// const handleDelete = () => {
-	//   console.log('Logo deleted');
-	//   showToast({
-	//     message: 'Logo deleted!',
-	//     variant: 'error',
-	//   });
-	// };
-
-	// const handleUpdate = () => {
-	//   console.log('Logo updated successfully!');
-	//   showToast({
-	//     message: 'Logo updated successfully!',
-	//     variant: 'success',
-	//   });
-	// };
-
-	/**
-	 * ==================================================
-	 * NEW APPROACH: MODALS V2 (TYPED GLOBAL SYSTEM)
-	 * ==================================================
-	 * We call openModal({ type: 'deleteConfirm' | 'uploadFile', ... }) to open modals.
-	 * This replaces the old <ModalWrapper variant="..." /> usage.
-	 */
 	const { openModal } = useModalContext();
 
+	const { data, isLoading: fetchLoading, error } = useAccountSettingsQuery();
+	const updateBrandingSettings = useUpdateAccountSettingsMutation();
+
+	const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(data?.logoUrl ?? null);
+
+	// Create a ref for the hidden file input
+	const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+	const form = useSettingForm(data); // NEW helper
+	const {
+		control,
+		register,
+		reset,
+		watch,
+		formState: { errors, isValid, isDirty },
+		getValues,
+		setValue,
+		buildPayload,
+	} = form;
+
+	const showPersonalInfo = watch('showPersonalInfo');
+	const displayName = watch('displayName');
+
+	useEffect(() => {
+		if (data) reset(data);
+	}, [data, reset]);
+
+	useEffect(() => {
+		if (!showPersonalInfo) setValue('displayName', '');
+	}, [showPersonalInfo, setValue]);
+
+	// Submit data
+	const { loading, handleSubmit, toast } = useFormSubmission({
+		mutation: updateBrandingSettings,
+		getVariables: () => {
+			const { logo } = getValues();
+			const formData = new FormData();
+			formData.append('payload', JSON.stringify(buildPayload()));
+			if (logo) formData.append('logo', logo);
+			return formData;
+		},
+		validate: () => isValid,
+		successMessage: 'Branding settings updated successfully!',
+		onError: (err: any) =>
+			toast.showToast({
+				message: `Error: ${err instanceof Error ? err.message : 'Unknown error'}`,
+				variant: 'error',
+			}),
+	});
+
+	// Handle file selection
+	const handleUploadError = useCallback(
+		(msg?: string) => {
+			const errorMsg = msg || 'Previewing logo failed!';
+			showToast({ message: errorMsg, variant: 'error' });
+		},
+		[showToast],
+	);
+
+	const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		const MAX_FILE_SIZE = parseFileSize('2 MB');
+
+		if (file) {
+			if (file.size > MAX_FILE_SIZE) {
+				handleUploadError('File size exceeds 2 MB limit.');
+				return;
+			}
+
+			if (!file.type.startsWith('image/')) {
+				handleUploadError('Only image files are allowed.');
+				return;
+			}
+
+			setValue('logo', file);
+			setLogoPreviewUrl(URL.createObjectURL(file));
+		}
+	};
+
+	const handleUpdateClick = (e: MouseEvent) => {
+		e.preventDefault();
+		fileInputRef.current?.click();
+	};
+
+	// Open the DeleteConfirm and UploadFile modals
 	const handleDelete = (e: MouseEvent) => {
 		// We do preventDefault() to avoid the link jump
 		e.preventDefault();
@@ -89,42 +128,52 @@ export default function BrandingSetting() {
 		});
 	};
 
-	const handleUpload = (e: MouseEvent) => {
-		e.preventDefault();
+	// TODO: Future enhancement - Replace direct file upload with modal file picker
+	// const handleUpload = (e: MouseEvent) => {
+	// 	e.preventDefault();
 
-		openModal({
-			type: 'uploadFile',
-			contentProps: {
-				title: 'Upload logo',
-				maxFileSize: '3 MB',
-				fileFormats: 'JPG, PNG',
-				onUploadComplete: () => {
-					console.log('Logo updated successfully!');
-					showToast({
-						message: 'Logo updated successfully!',
-						variant: 'success',
-					});
-				},
-			},
-		});
-	};
+	// 	openModal({
+	// 		type: 'uploadFile',
+	// 		contentProps: {
+	// 			title: 'Upload logo',
+	// 			maxFileSize: '3 MB',
+	// 			fileFormats: 'JPG, PNG',
+	// 			onUploadComplete: () => {
+	// 				console.log('Logo updated successfully!');
+	// 				showToast({
+	// 					message: 'Logo updated successfully!',
+	// 					variant: 'success',
+	// 				});
+	// 			},
+	// 		},
+	// 	});
+	// };
 
-	// Simulate saving some branding settings
-	const handleSave = () => {
-		setLoading(true);
-		setTimeout(() => {
-			console.log('Settings updated successfully!');
-			showToast({
-				message: 'Settings updated successfully!',
-				variant: 'success',
-			});
-			setLoading(false);
-		}, 2000);
-	};
+	if (fetchLoading) {
+		return <LoadingSpinner />;
+	}
+
+	if (error) {
+		return (
+			<Box
+				display='flex'
+				justifyContent='center'
+				alignItems='center'
+				minHeight='50vh'>
+				<Typography color='error'>
+					{error instanceof Error ? error.message : 'Failed to load profile'}
+				</Typography>
+			</Box>
+		);
+	}
 
 	return (
-		<>
-			<Box>
+		<FormProvider {...form}>
+			<Box
+				component='form'
+				onSubmit={handleSubmit}
+				noValidate
+				autoComplete='off'>
 				<Box mb={{ sm: 12, md: 14, lg: 16 }}>
 					<Typography variant='subtitle2'>
 						Customize how your brand appears to the public across DataHall documents your visitors
@@ -142,99 +191,198 @@ export default function BrandingSetting() {
 						<Grid size={5}>
 							<Typography variant='h4'>Logo</Typography>
 						</Grid>
-						<Grid size={7}>
-							{/* ============== NEW COMPONENT: Moved the Avatar Code ============== */}
-							{/* <AvatarActions
-								initials='BU'
-								size={86}
-								onDelete={handleDelete}
-								onUpdate={handleUpload}
-							/> */}
-							{/* ============== NEW Approach: Modals V2 ============== */}
-							<Link
-								href='#'
-								underline='hover'
-								sx={{ px: 4, color: 'text.secondary' }}
-								onClick={handleDelete}>
-								Delete
-							</Link>
-							<Link
-								href='#'
-								underline='hover'
-								sx={{ px: 4, color: 'text.brand' }}
-								onClick={handleUpload}>
-								Update
-							</Link>
+						<Grid
+							size={7}
+							display='flex'
+							alignItems='center'
+							gap={5}>
+							<Box>
+								<label htmlFor='logo-upload'>
+									<AvatarCard
+										alt='Logo'
+										initials='BU'
+										src={logoPreviewUrl || undefined}
+										size={86}
+									/>
+								</label>
+								<input
+									id='logo-upload'
+									type='file'
+									accept='image/*'
+									style={{ display: 'none' }}
+									onChange={handleFileChange}
+									ref={fileInputRef}
+								/>
+							</Box>
+							<Box
+								display='flex'
+								gap={5}>
+								<Link
+									href='#'
+									underline='hover'
+									color='text.secondary'
+									onClick={handleDelete}>
+									Delete
+								</Link>
+								<Link
+									href='#'
+									underline='hover'
+									onClick={handleUpdateClick}>
+									Update
+								</Link>
+							</Box>
 						</Grid>
 
-						{/* Background color */}
+						{/* Background Color */}
 						<Grid size={5}>
-							<Typography variant='h4'>Background color</Typography>
+							<Typography variant='h4'>Background Color</Typography>
+						</Grid>
+						<Grid size={7}>
+							<Controller
+								control={control}
+								name='bgPreset'
+								render={({ field }) => (
+									<Select
+										aria-label='bgPreset'
+										size='small'
+										sx={{ minWidth: 150 }}
+										{...field}
+										onChange={(e) => {
+											field.onChange(e);
+											setValue('bgPreset', e.target.value as BgPreset);
+										}}>
+										{BG_PRESETS.map((bgPreset) => (
+											<MenuItem
+												key={bgPreset}
+												value={bgPreset}>
+												{bgPreset.charAt(0).toUpperCase() + bgPreset.slice(1)}
+											</MenuItem>
+										))}
+									</Select>
+								)}
+							/>
+						</Grid>
+
+						{/* Theme Preset */}
+						<Grid size={5}>
+							<Typography variant='h4'>Theme Preset</Typography>
+						</Grid>
+						<Grid size={7}>
+							<Controller
+								control={control}
+								name='themePreset'
+								render={({ field }) => (
+									<Select
+										aria-label='themePreset'
+										size='small'
+										sx={{ minWidth: 150 }}
+										{...field}
+										value={field.value ?? ''}
+										onChange={(e) => {
+											field.onChange(e);
+											setValue(
+												'themePreset',
+												e.target.value === '' ? null : (e.target.value as ThemePreset),
+											);
+										}}>
+										{THEME_PRESETS.map((themePreset) => (
+											<MenuItem
+												key={themePreset}
+												value={themePreset}>
+												{themePreset.charAt(0).toUpperCase() + themePreset.slice(1)}
+											</MenuItem>
+										))}
+										<MenuItem value=''>No Preset (Custom)</MenuItem>
+									</Select>
+								)}
+							/>
+						</Grid>
+
+						{/* Custom Theme Color */}
+						<Grid size={5}>
+							<Typography variant='h4'>Custom Theme Color</Typography>
 						</Grid>
 						<Grid size={7}>
 							<ColorPickerBox />
 						</Grid>
 
-						{/* Font color */}
-						<Grid size={5}>
-							<Typography variant='h4'>Font color</Typography>
+						{/* Show Personal Info */}
+						<Grid
+							size={5}
+							display='flex'
+							flexDirection='column'
+							gap={3}>
+							<Typography variant='h4'>Show Personal Info</Typography>
+							<Typography variant='body2'>
+								Controls whether your avatar and display name are shown to public visitors on your
+								documents.
+							</Typography>
 						</Grid>
 						<Grid size={7}>
-							<ColorPickerBox />
+							<Controller
+								control={control}
+								name='showPersonalInfo'
+								render={({ field }) => (
+									<Select
+										aria-label='showPersonalInfo'
+										size='small'
+										sx={{ minWidth: 150 }}
+										{...field}
+										onChange={(e) => {
+											field.onChange(e);
+											setValue('showPersonalInfo', e.target.value === 'true' ? true : false);
+										}}>
+										<MenuItem value='false'>No</MenuItem>
+										<MenuItem value='true'>Yes</MenuItem>
+									</Select>
+								)}
+							/>
 						</Grid>
+
+						{/* Display Name */}
+						{showPersonalInfo && (
+							<>
+								<Grid size={5}>
+									<Typography variant='h4'>Display Name</Typography>
+								</Grid>
+								<Grid
+									size={5}
+									display='flex'
+									gap={7}>
+									<FormInput
+										minWidth={350}
+										fullWidth={false}
+										{...register('displayName')}
+										errorMessage={errors.displayName?.message}
+										inputProps={{ maxLength: 40 }}
+										placeholder='Enter name'
+									/>
+									<Box mt={4.5}>
+										<Typography variant={displayName ? 'h6' : 'body2'}>
+											{displayName?.length || 0} / 40
+										</Typography>
+									</Box>
+								</Grid>
+							</>
+						)}
 
 						<Box
 							width='100%'
 							display='flex'
 							justifyContent='flex-end'
-							mt={{ sm: 40, md: 50, lg: 60 }}>
-							<Button
-								variant='contained'
-								onClick={handleSave}
-								disabled={loading}
-								endIcon={
-									loading ? (
-										<CircularProgress
-											size={20}
-											color='inherit'
-										/>
-									) : null
-								}>
-								{loading ? 'Saving...' : 'Save'}
-							</Button>
+							mt={{ sm: 30, md: 35, lg: 40 }}>
+							<LoadingButton
+								type='submit'
+								loading={loading}
+								buttonText='Save'
+								loadingText='Saving...'
+								fullWidth={false}
+								disabled={!isDirty || !isValid || loading}
+							/>
 						</Box>
 					</Grid>
 				</Box>
 			</Box>
-
-			{/**
-			 * =================================================================
-			 * OLD "ModalWrapper" usage commented out, for reference:
-			 * - Removing these comments would revert to the old approach
-			 * - This is purely so devs can see how it used to be
-			 * =================================================================
-			 */}
-
-			{/* <ModalWrapper
-				variant='delete'
-				title='Really delete this logo?'
-				description='When you delete this logo, all the links associated with the logo will also be removed. This action is non-reversible.'
-				confirmButtonText='Delete logo'
-				open={deleteModal.isOpen}
-				onClose={handleDelete}
-				toggleModal={deleteModal.closeModal}
-			/> */}
-
-			{/* <ModalWrapper
-				variant='upload'
-				title='Upload logo'
-				confirmButtonText='Update'
-				open={uploadModal.isOpen}
-				onClose={handleUpdate}
-				maxFileSize='3 MB'
-				fileFormats='JPG, PNG'
-				toggleModal={uploadModal.closeModal}
-			/> */}
-		</>
+		</FormProvider>
 	);
 }

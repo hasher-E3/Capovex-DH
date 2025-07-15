@@ -61,4 +61,8 @@ export type {
 } from './analyticsModels';
 
 export * from './settingsModels';
-export type { AccountSetting, UpdateAccountSettingPayload } from './settingsModels';
+export type {
+	AccountSetting,
+	UpdateAccountSettingPayload,
+	UpdateAccountSettingResponse,
+} from './settingsModels';

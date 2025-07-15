@@ -21,7 +21,7 @@ const MAX_MB = 50;
 export const UpdateAccountSettingSchema: z.ZodType<UpdateAccountSettingPayload> = z.object({
 	primaryColor: z
 		.string()
-		.regex(/^#?([0-9a-fA-F]{3}){1,2}$/, 'Invalid HEX colour')
+		.regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/, 'Invalid HEX color')
 		.optional(),
 	themePreset: ThemeEnum.nullable().optional(),
 	bgPreset: BgEnum.optional(),
