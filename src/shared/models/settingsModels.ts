@@ -27,9 +27,12 @@ export interface UpdateAccountSettingPayload {
 	/** sent as multipart/form-data under field name “logo” */
 }
 
-/**
- * Row returned by GET /api/settings/system (mirrors DB).
- */
+export interface AccountSettingResponse {
+	message: string;
+	data: AccountSetting;
+}
+
+/** Row returned by GET /api/settings/system (mirrors DB) */
 export interface SystemSettingDTO {
 	enableNotifications: boolean;
 	emailFromName: string | null;

@@ -1,22 +1,24 @@
 import { useState } from 'react';
 import { SketchPicker } from 'react-color';
 
-import { Box, Dialog, IconButton, TextField } from '@mui/material';
+import { Box, Dialog, IconButton } from '@mui/material';
 
 import { convertTransparencyToHex } from '@/shared/utils';
+import { UpdateAccountSettingFormValues } from '@/hooks/forms';
+import { useFormContext } from 'react-hook-form';
+import { FormInput } from '@/components';
 
 export default function ColorPickerBox() {
-	const [pickerColor, setPickerColor] = useState('#ffffff');
 	const [showPicker, setShowPicker] = useState(false);
+
+	const { setValue, watch, register } = useFormContext<UpdateAccountSettingFormValues>();
+
+	const primaryColor = watch('primaryColor') ?? '#3f51b5';
 
 	const handleColorChange = (newColor: any) => {
 		//Concat the 2-digit hex as a transparency number to newColor.hex
 		const transparentColor = newColor.hex.concat(convertTransparencyToHex(newColor.rgb.a));
-		setPickerColor(transparentColor); //Push the changed color to color state
-	};
-
-	const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-		setPickerColor(event.target.value); //Push the hex code
+		setValue('primaryColor', transparentColor, { shouldDirty: true });
 	};
 
 	//Open and close a color picker
@@ -35,18 +37,20 @@ export default function ColorPickerBox() {
 			alignItems='center'>
 			<IconButton
 				sx={{
-					backgroundColor: pickerColor,
+					bgcolor: primaryColor,
 					border: 1,
 					borderRadius: 2,
 					p: 5,
 					'&:hover': {
-						backgroundColor: pickerColor,
+						bgcolor: primaryColor,
 					},
 				}}
 				onClick={togglePicker}></IconButton>
-			<TextField
-				value={pickerColor}
-				onChange={handleInputChange}
+			<FormInput
+				minWidth={120}
+				fullWidth={false}
+				{...register('primaryColor')}
+				value={primaryColor}
 				sx={{
 					'& .MuiInputBase-input': { py: 0 },
 					'& .MuiOutlinedInput-root': {
@@ -65,7 +69,7 @@ export default function ColorPickerBox() {
 					},
 				}}>
 				<SketchPicker
-					color={pickerColor}
+					color={primaryColor}
 					onChange={handleColorChange}
 				/>
 			</Dialog>
