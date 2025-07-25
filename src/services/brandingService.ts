@@ -5,7 +5,7 @@ import prisma from '@/lib/prisma';
 import { ServiceError, storageService } from '@/services';
 
 import { THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
-import { emptyToNull, parseBoolean } from '@/shared/utils';
+import { emptyToNull } from '@/shared/utils';
 
 const ASSETS_BUCKET = process.env.SUPABASE_ASSETS_BUCKET || 'assets';
 const SIGNED_URL_TTL = Number(process.env.SIGNED_URL_TTL_SECONDS || 60 * 60 * 24 * 7); // 7 days
@@ -167,22 +167,28 @@ export const brandingService = {
 	 * @returns The parsed update input object.
 	 */
 	async buildUpdateInput(form: FormData): Promise<UpdateSettingsInput> {
-		const input: UpdateSettingsInput = {};
+		/* -------------------- 1. Parse scalar JSON part -------------------- */
+		const raw = form.get('payload');
+		if (!raw) throw new ServiceError('Missing “payload” part', 400);
 
-		// Scalar text fields
-		const primaryColor = form.get('primaryColor') as string | null;
-		const themePreset = form.get('themePreset') as string | null;
-		const bgPreset = form.get('bgPreset') as string | null;
-		const personalInfo = form.get('showPersonalInfo') as string | null;
-		const displayName = form.get('displayName') as string | null;
+		let payload: Record<string, unknown>;
+		try {
+			const text = typeof raw === 'string' ? raw : await (raw as File).text();
+			payload = JSON.parse(text);
+		} catch {
+			throw new ServiceError('Invalid JSON in “payload”', 400);
+		}
 
-		if (primaryColor) input.primaryColor = primaryColor;
-		if (themePreset !== null) input.themePreset = emptyToNull(themePreset) as any;
-		if (bgPreset) input.bgPreset = bgPreset as any;
-		if (personalInfo !== null) input.showPersonalInfo = parseBoolean(personalInfo);
-		if (displayName !== null) input.displayName = emptyToNull(displayName);
+		/* -------------------- 2. Coerce & copy into input ------------------ */
+		const input: UpdateSettingsInput = {
+			primaryColor: payload.primaryColor as string | undefined,
+			themePreset: (payload.themePreset ?? null) as ThemePreset | null | undefined,
+			bgPreset: payload.bgPreset as any,
+			showPersonalInfo: payload.showPersonalInfo as boolean | undefined,
+			displayName: emptyToNull(payload.displayName as string | null | undefined),
+		};
 
-		// Optional logo file
+		/* -------------------- 3. Optional logo file ------------------------ */
 		const logo = form.get('logo');
 		if (logo instanceof File && logo.size > 0) {
 			input.logoFile = {

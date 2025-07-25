@@ -3,6 +3,8 @@ import { PencilIcon } from '@/icons';
 import { MouseEvent } from 'react';
 
 interface AvatarCardProps {
+	/** Descriptive text for the image, used for accessibility */
+	alt?: string;
 	/** Image URL (optional). If absent, initials are shown. */
 	src?: string;
 	/** Fallback initials when no image. Example: "BU" */
@@ -18,6 +20,7 @@ interface AvatarCardProps {
 }
 
 export default function AvatarCard({
+	alt = 'Avatar',
 	src,
 	initials = '',
 	size = 64,
@@ -43,7 +46,7 @@ export default function AvatarCard({
 					'&:hover .avatar-edit-icon': { opacity: disabled ? 0 : 1 },
 				}}>
 				<Avatar
-					alt='Avatar'
+					alt={alt}
 					src={src}
 					sx={{
 						width: '100%',
@@ -57,31 +60,31 @@ export default function AvatarCard({
 					{src ? null : initials}
 				</Avatar>
 
-				{onUpdate && (
-					<Box
-						className='avatar-edit-icon'
-						sx={{
-							position: 'absolute',
-							top: 0,
-							left: 0,
-							width: '100%',
-							height: '100%',
-							display: 'flex',
-							alignItems: 'center',
-							justifyContent: 'center',
-							bgcolor: 'rgba(0,0,0,0.15)',
-							opacity: 0,
-							transition: 'opacity 0.3s',
-							cursor: 'pointer',
-						}}
-						onClick={disabled ? undefined : onUpdate}>
-						<PencilIcon
-							width={size * 0.3}
-							height={size * 0.3}
-							color='white'
-						/>
-					</Box>
-				)}
+				{/* {onUpdate && ( */}
+				<Box
+					className='avatar-edit-icon'
+					sx={{
+						position: 'absolute',
+						top: 0,
+						left: 0,
+						width: '100%',
+						height: '100%',
+						display: 'flex',
+						alignItems: 'center',
+						justifyContent: 'center',
+						bgcolor: 'rgba(0,0,0,0.15)',
+						opacity: 0,
+						transition: 'opacity 0.3s',
+						cursor: 'pointer',
+					}}
+					onClick={disabled ? undefined : onUpdate}>
+					<PencilIcon
+						width={size * 0.3}
+						height={size * 0.3}
+						color='white'
+					/>
+				</Box>
+				{/* )} */}
 			</Box>
 
 			{/* Action links */}
@@ -89,7 +92,7 @@ export default function AvatarCard({
 				<Link
 					href='#'
 					underline='hover'
-					pl={2}
+					pl={8}
 					color='text.secondary'
 					onClick={onDelete}
 					sx={linkStyle}>
@@ -100,7 +103,7 @@ export default function AvatarCard({
 				<Link
 					href='#'
 					underline='hover'
-					px={2}
+					px={8}
 					onClick={onUpdate}
 					sx={linkStyle}>
 					Update
