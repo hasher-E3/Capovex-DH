@@ -1,11 +1,11 @@
 import { z } from 'zod';
 import { THEME_PRESETS, BG_PRESETS, BgPreset, ThemePreset } from '@/shared/config/brandingConfig';
 import {
-	AccountSetting,
+	BrandingSetting,
 	SystemSettingDTO,
 	SystemSettingsUpdatePayload,
 	TestEmailPayload,
-	UpdateAccountSettingPayload,
+	UpdateBrandingSettingPayload,
 } from '@/shared/models';
 
 const ThemeEnum = z.enum([...THEME_PRESETS] as [ThemePreset, ...ThemePreset[]]);
@@ -18,20 +18,35 @@ const MIN_MB = 1;
 const MAX_MB = 50;
 
 /* ------------------ PATCH /api/settings/branding ------------------ */
-export const UpdateAccountSettingSchema: z.ZodType<UpdateAccountSettingPayload> = z.object({
-	primaryColor: z
-		.string()
-		.regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$/, 'Invalid HEX color')
-		.optional(),
-	themePreset: ThemeEnum.nullable().optional(),
-	bgPreset: BgEnum.optional(),
-	showPersonalInfo: z.boolean().optional(),
-	displayName: z.string().max(40).nullable().optional(),
-	/* logo image handled via multipart file; not present in JSON body */
-});
+export const UpdateBrandingSettingSchema: z.ZodType<UpdateBrandingSettingPayload> = z
+	.object({
+		primaryColor: z
+			/* 6-digit or 3-digit HEX (no alpha) */
+			.string()
+			.regex(/^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, 'Invalid HEX colour')
+			.optional(),
+
+		themePreset: ThemeEnum.nullable().optional(),
+		bgPreset: BgEnum.optional(),
+
+		showPersonalInfo: z.boolean().optional(),
+		displayName: z.string().max(40).nullable().optional(),
+		/* logo image handled via multipart file; not present in JSON body */
+	})
+	.superRefine((val, ctx) => {
+		const hasPreset = val.themePreset !== null && val.themePreset !== undefined;
+		const hasHex = !!val.primaryColor?.trim();
+
+		if (hasPreset && hasHex) {
+			ctx.addIssue({
+				code: 'custom',
+				message: 'Choose either a Preset or a Custom colour – not both',
+			});
+		}
+	});
 
 /* ------------------ GET /api/settings/branding ------------------- */
-export const AccountSettingSchema: z.ZodType<AccountSetting> = z.object({
+export const BrandingSettingSchema: z.ZodType<BrandingSetting> = z.object({
 	userId: z.string(),
 	logoUrl: z.string().nullable(),
 	primaryColor: z.string(),
@@ -39,12 +54,11 @@ export const AccountSettingSchema: z.ZodType<AccountSetting> = z.object({
 	bgPreset: BgEnum,
 	showPersonalInfo: z.boolean(),
 	displayName: z.string().nullable(),
-	updatedAt: z.string(),
-	createdAt: z.string(),
+	updatedAt: z.string(), // ISO
+	createdAt: z.string(), // ISO
 });
 
 /* ------------------ PATCH /api/settings/system  ------------------ */
-
 export const SystemSettingsUpdateSchema: z.ZodType<SystemSettingsUpdatePayload> = z
 	.object({
 		enableNotifications: z.boolean().optional(),
@@ -69,7 +83,6 @@ export const SystemSettingsUpdateSchema: z.ZodType<SystemSettingsUpdatePayload> 
 	});
 
 /* ------------------ GET /api/settings/system ------------------- */
-
 export const SystemSettingSchema: z.ZodType<SystemSettingDTO> = z.object({
 	enableNotifications: z.boolean(),
 	emailFromName: z.string().nullable(),
@@ -82,7 +95,6 @@ export const SystemSettingSchema: z.ZodType<SystemSettingDTO> = z.object({
 });
 
 /* ------------------ POST /api/settings/system/test-email ------------------- */
-
 export const TestEmailSchema: z.ZodType<TestEmailPayload> = z.object({
 	to: z.string().email(),
 });

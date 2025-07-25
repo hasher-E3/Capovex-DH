@@ -67,8 +67,8 @@ export type {
 // Settings models and types
 export * from './settingsModels';
 export type {
-	AccountSetting,
-	UpdateAccountSettingPayload,
+	BrandingSetting,
+	UpdateBrandingSettingPayload,
 	TestEmailPayload,
 	SystemSettingsUpdatePayload,
 	SystemSettingDTO,

@@ -1,9 +1,9 @@
 import { ThemePreset, BgPreset } from '@/shared/config/brandingConfig';
 
 /**
- * Row returned by GET /api/settings (mirrors DB).
+ * shape stored in DB / returned by API
  */
-export interface AccountSetting {
+export interface BrandingSetting {
 	userId: string;
 	logoUrl: string | null;
 	primaryColor: string;
@@ -18,7 +18,7 @@ export interface AccountSetting {
 /**
  * Payload accepted by PATCH /api/settings.
  */
-export interface UpdateAccountSettingPayload {
+export interface UpdateBrandingSettingPayload {
 	primaryColor?: string;
 	themePreset?: ThemePreset | null;
 	bgPreset?: BgPreset;
@@ -27,9 +27,9 @@ export interface UpdateAccountSettingPayload {
 	/** sent as multipart/form-data under field name “logo” */
 }
 
-export interface AccountSettingResponse {
+export interface BrandingSettingResponse {
 	message: string;
-	data: AccountSetting;
+	data: BrandingSetting;
 }
 
 /** Row returned by GET /api/settings/system (mirrors DB) */
