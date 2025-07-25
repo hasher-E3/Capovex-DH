@@ -4,10 +4,11 @@ import path from 'path';
 import prisma from '@/lib/prisma';
 import { ServiceError, storageService } from '@/services';
 
-import { THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
-import { emptyToNull } from '@/shared/utils';
+import { BG_PRESETS, BgPreset, THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
+import { emptyToNull, parseBoolean } from '@/shared/utils';
 
 import { ASSETS_BUCKET, SIGNED_URL_TTL } from '@/shared/config/storageConfig';
+import { BrandingSetting, UpdateBrandingSettingPayload } from '@/shared/models';
 
 /**
  * Represents an uploaded branding image.
@@ -21,12 +22,7 @@ export type BrandingImage = {
 /**
  * Input type for updating account branding settings.
  */
-export type UpdateSettingsInput = {
-	primaryColor?: string;
-	themePreset?: ThemePreset | null;
-	bgPreset?: 'white' | 'softGrey' | 'tinted';
-	showPersonalInfo?: boolean;
-	displayName?: string | null;
+type UpdateSettingsInput = UpdateBrandingSettingPayload & {
 	logoFile?: BrandingImage;
 };
 
@@ -34,11 +30,11 @@ export type UpdateSettingsInput = {
  * Builds the default branding settings, mirroring Prisma defaults.
  * @returns An object containing default branding settings.
  */
-function buildDefaultSettings() {
+function buildDefaultSettings(): Partial<BrandingSetting> {
 	return {
-		primaryColor: '#3f51b5',
+		primaryColor: '#1570EF',
 		themePreset: null,
-		bgPreset: 'white',
+		bgPreset: 'plain',
 		showPersonalInfo: false,
 		logoUrl: null,
 		displayName: null,
@@ -51,17 +47,18 @@ function buildDefaultSettings() {
  */
 export const brandingService = {
 	/**
-	 * Retrieves the account settings for a user, creating defaults if not present.
+	 * Retrieves the Branding settings for a user, creating defaults if not present.
 	 *
 	 * @param userId - The user's unique identifier.
-	 * @returns The user's account settings object.
+	 * @returns The user's Branding settings object.
 	 */
-	async getAccountSettings(userId: string) {
-		const existing = await prisma.accountSetting.findUnique({ where: { userId } });
+	async getBrandingSettings(userId: string) {
+		const existing = await prisma.brandingSetting.findUnique({ where: { userId } });
+		console.log('🚀 ~ getBrandingSettings ~ existing:', existing);
 		if (existing) return existing;
 
 		// Create default row atomically if not found
-		return prisma.accountSetting.upsert({
+		return prisma.brandingSetting.upsert({
 			where: { userId },
 			update: {},
 			create: { userId, ...buildDefaultSettings() },
@@ -75,25 +72,33 @@ export const brandingService = {
 	 * @returns The user's display name if available, otherwise `null`.
 	 */
 	async getDisplayName(userId: string): Promise<string | null> {
-		const accountSettings = await brandingService.getAccountSettings(userId);
-		return accountSettings.showPersonalInfo && accountSettings.displayName?.trim()
-			? accountSettings.displayName.trim()
+		const brandingSettings = await brandingService.getBrandingSettings(userId);
+		return brandingSettings.showPersonalInfo && brandingSettings.displayName?.trim()
+			? brandingSettings.displayName.trim()
 			: null;
 	},
 	/**
-	 * Updates the account settings for a user, including scalar fields and optional logo file upload.
+	 * Updates the branding settings for a user, including scalar fields and optional logo file upload.
 	 *
 	 * @param userId - The user's unique identifier.
 	 * @param data - The update input payload containing branding fields and optional logo file.
-	 * @returns The updated account settings object.
+	 * @returns The updated branding settings object.
 	 * @throws ServiceError if the theme preset is invalid or image type is not supported.
 	 */
-	async updateAccountSettings(userId: string, data: UpdateSettingsInput) {
+	async updateBrandingSettings(userId: string, data: UpdateSettingsInput) {
+		if (
+			data.themePreset !== undefined &&
+			data.themePreset !== null &&
+			data.primaryColor !== undefined
+		) {
+			throw new ServiceError('Provide either “themePreset” or “primaryColor”, not both.', 400);
+		}
+
 		if (data.themePreset && !THEME_PRESETS.includes(data.themePreset)) {
 			throw new ServiceError('Invalid theme preset.', 400);
 		}
 
-		const current = await brandingService.getAccountSettings(userId);
+		const current = await brandingService.getBrandingSettings(userId);
 		const updates: Record<string, any> = {};
 
 		// Scalar fields
@@ -102,6 +107,13 @@ export const brandingService = {
 		if (data.bgPreset !== undefined) updates.bgPreset = data.bgPreset;
 		if (data.showPersonalInfo !== undefined) updates.showPersonalInfo = data.showPersonalInfo;
 		if ('displayName' in data) updates.displayName = data.displayName;
+
+		if (data.bgPreset && !BG_PRESETS.includes(data.bgPreset)) {
+			throw new ServiceError('Invalid background preset.', 400);
+		}
+
+		// If themePreset is set, clear primaryColor to avoid conflicts
+		if (data.themePreset !== null) updates.primaryColor = null;
 
 		// Logo upload
 		if (data.logoFile) {
@@ -140,7 +152,7 @@ export const brandingService = {
 		if (Object.keys(updates).length === 0) return current;
 
 		// Database update
-		return prisma.accountSetting.update({
+		return prisma.brandingSetting.update({
 			where: { userId },
 			data: updates,
 		});
@@ -182,10 +194,22 @@ export const brandingService = {
 		const input: UpdateSettingsInput = {
 			primaryColor: payload.primaryColor as string | undefined,
 			themePreset: (payload.themePreset ?? null) as ThemePreset | null | undefined,
-			bgPreset: payload.bgPreset as any,
+			bgPreset: payload.bgPreset as BgPreset,
 			showPersonalInfo: payload.showPersonalInfo as boolean | undefined,
 			displayName: emptyToNull(payload.displayName as string | null | undefined),
 		};
+
+		if (input.themePreset && !THEME_PRESETS.includes(input.themePreset)) {
+			throw new ServiceError('Invalid theme preset.', 400);
+		}
+
+		if (input.themePreset && input.primaryColor) {
+			throw new ServiceError('Provide either “themePreset” or “primaryColor”, not both.', 400);
+		}
+
+		if (input.bgPreset && !BG_PRESETS.includes(input.bgPreset)) {
+			throw new ServiceError('Invalid background preset.', 400);
+		}
 
 		/* -------------------- 3. Optional logo file ------------------------ */
 		const logo = form.get('logo');
