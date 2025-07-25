@@ -1,4 +1,12 @@
 import '@mui/material/styles';
+import {
+	TextTokens,
+	BackgroundTokens,
+	AlertTokens,
+	BorderTokens,
+	HoverTokens,
+	DisabledTokens,
+} from './themeTypes';
 
 declare module '@mui/material' {
 	interface SimplePaletteColorOptions {
@@ -7,6 +15,9 @@ declare module '@mui/material' {
 }
 
 declare module '@mui/material/styles' {
+	interface TypeBackground extends BackgroundTokens {}
+	interface TypeText extends Pick<TextTokens, 'primary' | 'secondary'>, Partial<TextTokens> {}
+
 	interface TypeBackground {
 		content: string;
 		alt: string;
@@ -15,6 +26,7 @@ declare module '@mui/material/styles' {
 		error: string;
 		secondary: string; // light-grey / blue tint
 		secondaryButton: string; // legacy neutral button BG
+		paper: string; // white / brand paper
 	}
 
 	// Extend the Variant type
@@ -29,23 +41,21 @@ declare module '@mui/material/styles' {
 		subtitle3?: React.CSSProperties;
 	}
 
-	interface TypeText {
-		notes: string;
-		brand: string;
-		error: string;
-	}
-
 	interface Theme {
-		border: {
-			light: string;
-			dark: string;
-		};
+		text: TextTokens;
+		background: BackgroundTokens;
+		hover: HoverTokens;
+		alert: AlertTokens;
+		border: BorderTokens;
+		disabled: DisabledTokens;
 	}
 	interface ThemeOptions {
-		border?: {
-			light: string;
-			dark: string;
-		};
+		text?: Partial<TextTokens>;
+		background?: Partial<BackgroundTokens>;
+		hover?: Partial<HoverTokens>;
+		alert?: Partial<AlertTokens>;
+		border?: Partial<BorderTokens>;
+		disabled?: Partial<DisabledTokens>;
 	}
 }
 

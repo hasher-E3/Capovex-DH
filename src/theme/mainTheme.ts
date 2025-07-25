@@ -200,7 +200,4 @@ const mainTheme = createTheme(neutralTheme, {
 	},
 });
 
-(mainTheme as any).disabled = disabled;
-(mainTheme as any).background = background;
-
 export default mainTheme;

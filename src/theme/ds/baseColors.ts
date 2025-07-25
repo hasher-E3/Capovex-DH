@@ -4,6 +4,14 @@
  * -------------------------------------------------------------------------- */
 
 import { alpha } from '@mui/material';
+import {
+	TextTokens,
+	BackgroundTokens,
+	AlertTokens,
+	BorderTokens,
+	HoverTokens,
+	DisabledTokens,
+} from '../themeTypes';
 
 /** Neutral greys & semantic colours */
 export const neutral = {
@@ -33,7 +41,7 @@ export const makeAlpha = (hex: string, opacity: number) => alpha(hex, opacity);
  * Legacy colour objects – preserved names, neutral fall-backs
  * ------------------------------------------------------------------------ */
 
-export const text = {
+export const text: Readonly<TextTokens> = {
 	primary: neutral.gray700,
 	secondary: neutral.gray600,
 	tertiary: neutral.white,
@@ -42,7 +50,7 @@ export const text = {
 	error: '#FF4747', // keep distinct semantic red
 } as const;
 
-export const background = {
+export const background: Readonly<BackgroundTokens> = {
 	content: neutral.white,
 	alt: neutral.gray100,
 	primary: neutral.white, // overridden to brand hue later
@@ -50,15 +58,16 @@ export const background = {
 	error: neutral.error,
 	secondary: neutral.gray50,
 	secondaryButton: neutral.gray100,
+	paper: neutral.white,
 } as const;
 
-export const disabled = {
+export const disabled: Readonly<DisabledTokens> = {
 	primary: neutral.gray200,
 	secondary: neutral.gray100,
 	error: makeAlpha(neutral.error, 0.3),
 } as const;
 
-export const hover = {
+export const hover: Readonly<HoverTokens> = {
 	primary: makeAlpha(neutral.gray700, 0.08), // overridden later
 	secondary: makeAlpha(neutral.gray600, 0.06),
 	tertiary: makeAlpha(neutral.gray700, 0.04),
@@ -66,7 +75,7 @@ export const hover = {
 	error: makeAlpha(neutral.error, 0.9),
 } as const;
 
-export const alert = {
+export const alert: Readonly<AlertTokens> = {
 	info: neutral.gray700, // neutral core “info”
 	infoLight: neutral.gray50,
 	warning: neutral.warning,
@@ -78,7 +87,7 @@ export const alert = {
 	default: neutral.white,
 } as const;
 
-export const border = {
+export const border: Readonly<BorderTokens> = {
 	light: neutral.gray200,
 	dark: neutral.gray300,
 } as const;

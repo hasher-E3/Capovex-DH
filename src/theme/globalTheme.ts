@@ -25,7 +25,8 @@ const baseTheme = createTheme({
 		secondary: { main: background.secondary },
 		error: { main: background.error, contrastText: text.tertiary },
 		text: text,
-		background: background as PaletteOptions['background'],
+		background: background as unknown as PaletteOptions['background'],
+
 		action: {
 			hover: hover.primary,
 			selected: makeAlpha(neutral.gray700, 0.12),
