@@ -3,22 +3,20 @@ import { SketchPicker } from 'react-color';
 
 import { Box, Dialog, IconButton } from '@mui/material';
 
-import { convertTransparencyToHex } from '@/shared/utils';
-import { UpdateAccountSettingFormValues } from '@/hooks/forms';
-import { useFormContext } from 'react-hook-form';
 import { FormInput } from '@/components';
+import { UpdateBrandingSettingFormValues } from '@/hooks/forms';
+import { useFormContext } from 'react-hook-form';
 
-export default function ColorPickerBox() {
+export default function ColorPickerBox({ disabled = false }: { disabled?: boolean }) {
 	const [showPicker, setShowPicker] = useState(false);
 
-	const { setValue, watch, register } = useFormContext<UpdateAccountSettingFormValues>();
+	const { setValue, watch, register } = useFormContext<UpdateBrandingSettingFormValues>();
 
-	const primaryColor = watch('primaryColor') ?? '#3f51b5';
+	const primaryColor = watch('primaryColor') ?? '#1570EF'; // Default to Bluewave blue if not set
 
 	const handleColorChange = (newColor: any) => {
-		//Concat the 2-digit hex as a transparency number to newColor.hex
-		const transparentColor = newColor.hex.concat(convertTransparencyToHex(newColor.rgb.a));
-		setValue('primaryColor', transparentColor, { shouldDirty: true });
+		setValue('primaryColor', newColor.hex, { shouldDirty: true });
+		setValue('themePreset', null, { shouldDirty: true }); // clears preset
 	};
 
 	//Open and close a color picker
@@ -34,7 +32,11 @@ export default function ColorPickerBox() {
 			width={150}
 			p={3}
 			display='flex'
-			alignItems='center'>
+			alignItems='center'
+			sx={{
+				pointerEvents: disabled ? 'none' : 'auto',
+				opacity: disabled ? 0.4 : 1,
+			}}>
 			<IconButton
 				sx={{
 					bgcolor: primaryColor,
@@ -45,12 +47,15 @@ export default function ColorPickerBox() {
 						bgcolor: primaryColor,
 					},
 				}}
-				onClick={togglePicker}></IconButton>
+				onClick={() => {
+					if (!disabled) togglePicker();
+				}}></IconButton>
 			<FormInput
 				minWidth={120}
 				fullWidth={false}
 				{...register('primaryColor')}
 				value={primaryColor}
+				disabled={disabled}
 				sx={{
 					'& .MuiInputBase-input': { py: 0 },
 					'& .MuiOutlinedInput-root': {
