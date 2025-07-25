@@ -13,8 +13,9 @@ import {
 	systemSettingService,
 } from '@/services';
 
-import { ShareLinkRecipient } from '@/shared/models';
+import { PublicLinkMeta, ShareLinkRecipient } from '@/shared/models';
 import { buildDocumentLinkUrl } from '@/shared/utils';
+import { VisitorFieldKey } from '@/shared/config/visitorFieldsConfig';
 
 export const linkService = {
 	/**
@@ -324,7 +325,7 @@ export const linkService = {
 	 * @returns An object containing password protection status, visitor fields, and (if public and unrestricted) signed file metadata.
 	 * @throws ServiceError if the link is not found or expired.
 	 */
-	async getLinkMeta(linkId: string) {
+	async getLinkMeta(linkId: string): Promise<PublicLinkMeta> {
 		const link = await prisma.documentLink.findUnique({
 			where: { documentLinkId: linkId },
 			include: { document: true },
@@ -336,7 +337,8 @@ export const linkService = {
 
 		const baseMeta = {
 			isPasswordProtected: !!link.password,
-			visitorFields: link.visitorFields as string[],
+			visitorFields: link.visitorFields as VisitorFieldKey[],
+			ownerId: link.createdByUserId,
 		};
 
 		// Public + no gate ⇒ include signed URL & file meta for instant display
