@@ -7,14 +7,15 @@ import { Box, Button, Divider, Skeleton, Tab, Tabs, Typography } from '@mui/mate
 import { useHashTab } from '@/hooks';
 import { useAnalyticsQuery, useDocumentDetailQuery } from '@/hooks/data';
 
-import { FileTypeConfig } from '@/shared/config/fileIcons';
+import { DownloadIcon } from '@/icons';
+
 import { AnalyticsPeriod, DocumentType } from '@/shared/models';
-import { exportToCsv, formatDateTime } from '@/shared/utils';
+import { exportToCsv } from '@/shared/utils';
 
 import CustomBarChart from './CustomBarChart';
+import DocumentHeader from './DocumentHeader';
 import FilterToggle from './FilterToggle';
 import InfoTable from './InfoTable';
-import { DownloadIcon } from '@/icons';
 
 interface DocumentViewProps {
 	documentId: string;
@@ -119,33 +120,7 @@ export default function DocumentView({ documentId }: DocumentViewProps) {
 	return (
 		<Box>
 			{/* Document Heading */}
-			{isDocumentLoading ? (
-				<HeadingSkeleton />
-			) : (
-				<Box mb={10}>
-					<Box
-						display='flex'
-						alignItems='center'>
-						<Typography variant='h2'>{fileName}</Typography>
-						<Box
-							component={FileTypeConfig[fileType] || FileTypeConfig['General']}
-							pl={2}
-							sx={{ width: 24, height: 24 }}
-						/>
-					</Box>
-
-					<Typography
-						variant='body2'
-						component='div'
-						display='flex'
-						gap={4}
-						mt={3}>
-						<span>Version&nbsp;1</span>
-						<span>-</span>
-						<span>Last updated: {formatDateTime(updatedAt)}</span>
-					</Typography>
-				</Box>
-			)}
+			{isDocumentLoading ? <HeadingSkeleton /> : <DocumentHeader document={document} />}
 
 			{/* Analytics Section */}
 			{isAnalyticsLoading ? (

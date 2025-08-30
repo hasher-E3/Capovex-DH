@@ -61,14 +61,27 @@ export type {
 	AnalyticsSummary,
 	DocumentLinkStat,
 	PERIOD_OPTIONS,
+	DocumentQuickStats,
 } from './analyticsModels';
 
 // Settings models and types
 export * from './settingsModels';
 export type {
-	AccountSetting,
-	UpdateAccountSettingPayload,
+	BrandingSetting,
+	UpdateBrandingSettingPayload,
 	TestEmailPayload,
 	SystemSettingsUpdatePayload,
 	SystemSettingDTO,
 } from './settingsModels';
+
+// Theme models and types
+export * from './themeModels';
+export type {
+	BrandPalette,
+	AlertTokens,
+	BackgroundTokens,
+	BorderTokens,
+	DisabledTokens,
+	HoverTokens,
+	TextTokens,
+} from './themeModels';

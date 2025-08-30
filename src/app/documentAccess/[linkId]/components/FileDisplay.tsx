@@ -7,18 +7,11 @@ import { useToast } from '@/hooks';
 import { useCreateDocumentAnalyticsMutation } from '@/hooks/data';
 
 import { FileDownloadIcon } from '@/icons';
-import { AnalyticsEventType } from '@/shared/enums';
+import { AnalyticsEventType, LoadPhase } from '@/shared/enums';
 import { PublicLinkFilePayload } from '@/shared/models';
 import { formatFileSize, isViewableFileType } from '@/shared/utils';
 import { downloadFile } from '@/shared/utils/fileUtils';
 
-export enum LoadPhase {
-	Idle = 'idle',
-	Bundle = 'bundle',
-	Img = 'img',
-	Pdf = 'pdf',
-	Done = 'done',
-}
 const PDFViewer = dynamic(() => import('@/components/fileHandling/PDFViewer'), {
 	ssr: false,
 });
@@ -197,6 +190,7 @@ const FileDisplay = ({
 									linkId={documentLinkId}
 									onMount={handlePdfMount} // dynamic bundle finished
 									onReady={handlePdfReady} // PDF fully rendered (or errored)
+									maxViewHeight='245px'
 								/>
 							)}
 							{isImage && (

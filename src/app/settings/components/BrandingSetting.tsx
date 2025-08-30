@@ -11,19 +11,21 @@ import ColorPickerBox from './ColorPickerBox';
 
 import AvatarCard from '@/components/common/AvatarCard';
 import { Controller, FormProvider } from 'react-hook-form';
-import { useAccountSettingsQuery, useUpdateAccountSettingsMutation } from '@/hooks/data';
+import { useBrandingSettingsQuery, useUpdateBrandingSettingsMutation } from '@/hooks/data';
 import { useFormSubmission, useSettingForm } from '@/hooks/forms';
 import { FormInput, LoadingButton, LoadingSpinner } from '@/components';
 
 import { parseFileSize } from '@/shared/utils';
 import { BG_PRESETS, BgPreset, THEME_PRESETS, ThemePreset } from '@/shared/config/brandingConfig';
+import PresetSwatch from './PresetSwatch';
+import ThemePreviewCard from './ThemePreviewCard';
 
 export default function BrandingSetting() {
 	const { showToast } = useToast();
 	const { openModal } = useModalContext();
 
-	const { data, isLoading: fetchLoading, error } = useAccountSettingsQuery();
-	const updateBrandingSettings = useUpdateAccountSettingsMutation();
+	const { data, isLoading: fetchLoading, error } = useBrandingSettingsQuery();
+	const updateBrandingSettings = useUpdateBrandingSettingsMutation();
 
 	const [logoPreviewUrl, setLogoPreviewUrl] = useState<string | null>(data?.logoUrl ?? null);
 
@@ -44,6 +46,12 @@ export default function BrandingSetting() {
 
 	const showPersonalInfo = watch('showPersonalInfo');
 	const displayName = watch('displayName');
+	const themePreset = watch('themePreset');
+	const primaryColor = watch('primaryColor');
+	const bgPreset = watch('bgPreset');
+
+	const presetChosen = themePreset !== null && themePreset !== undefined; // any preset string
+	const hasCustomColor = !!primaryColor?.trim(); // valid hex in the field
 
 	useEffect(() => {
 		if (data) reset(data);
@@ -232,6 +240,49 @@ export default function BrandingSetting() {
 								</Link>
 							</Box>
 						</Grid>
+						{/* TODO: Custom Theme + BgPreset and Preset Theme exclusivity still needs work */}
+						{/* Theme Preset */}
+						<Grid size={5}>
+							<Typography variant='h4'>Theme Preset</Typography>
+						</Grid>
+						<Grid size={7}>
+							<Controller
+								control={control}
+								name='themePreset'
+								render={({ field }) => (
+									<Select
+										{...field}
+										aria-label='themePreset'
+										size='small'
+										sx={{ minWidth: 150, opacity: hasCustomColor ? 0.4 : 1 }}
+										disabled={hasCustomColor}
+										value={field.value ?? ''}
+										onChange={(e) => {
+											field.onChange(e);
+											setValue(
+												'themePreset',
+												e.target.value === '' ? null : (e.target.value as ThemePreset),
+											);
+										}}>
+										{THEME_PRESETS.map((themePreset) => (
+											<MenuItem
+												key={themePreset}
+												value={themePreset}>
+												{themePreset.charAt(0).toUpperCase() + themePreset.slice(1)}
+											</MenuItem>
+											// TODO: Future enhancement for showing preset swatches
+											// <MenuItem
+											// 	key={themePreset}
+											// 	value={themePreset}>
+											// 	{themePreset.charAt(0).toUpperCase() + themePreset.slice(1)}
+											// 	<PresetSwatch name={themePreset} />
+											// </MenuItem>
+										))}
+										<MenuItem value=''>No Preset (Custom)</MenuItem>
+									</Select>
+								)}
+							/>
+						</Grid>
 
 						{/* Background Color */}
 						<Grid size={5}>
@@ -243,10 +294,11 @@ export default function BrandingSetting() {
 								name='bgPreset'
 								render={({ field }) => (
 									<Select
+										{...field}
 										aria-label='bgPreset'
 										size='small'
-										sx={{ minWidth: 150 }}
-										{...field}
+										sx={{ minWidth: 150, opacity: presetChosen ? 0.4 : 1 }}
+										disabled={presetChosen}
 										onChange={(e) => {
 											field.onChange(e);
 											setValue('bgPreset', e.target.value as BgPreset);
@@ -263,47 +315,12 @@ export default function BrandingSetting() {
 							/>
 						</Grid>
 
-						{/* Theme Preset */}
-						<Grid size={5}>
-							<Typography variant='h4'>Theme Preset</Typography>
-						</Grid>
-						<Grid size={7}>
-							<Controller
-								control={control}
-								name='themePreset'
-								render={({ field }) => (
-									<Select
-										aria-label='themePreset'
-										size='small'
-										sx={{ minWidth: 150 }}
-										{...field}
-										value={field.value ?? ''}
-										onChange={(e) => {
-											field.onChange(e);
-											setValue(
-												'themePreset',
-												e.target.value === '' ? null : (e.target.value as ThemePreset),
-											);
-										}}>
-										{THEME_PRESETS.map((themePreset) => (
-											<MenuItem
-												key={themePreset}
-												value={themePreset}>
-												{themePreset.charAt(0).toUpperCase() + themePreset.slice(1)}
-											</MenuItem>
-										))}
-										<MenuItem value=''>No Preset (Custom)</MenuItem>
-									</Select>
-								)}
-							/>
-						</Grid>
-
 						{/* Custom Theme Color */}
 						<Grid size={5}>
 							<Typography variant='h4'>Custom Theme Color</Typography>
 						</Grid>
 						<Grid size={7}>
-							<ColorPickerBox />
+							<ColorPickerBox disabled={presetChosen} />
 						</Grid>
 
 						{/* Show Personal Info */}
@@ -365,6 +382,17 @@ export default function BrandingSetting() {
 								</Grid>
 							</>
 						)}
+
+						{/* TODO: Future enhancement for showing theme previews */}
+						{/* <Grid
+							size={12}
+							sx={{ display: 'flex', justifyContent: 'flex-start', mt: 6 }}>
+							<ThemePreviewCard
+								themePreset={themePreset}
+								primaryColor={primaryColor}
+								bgPreset={bgPreset ?? 'plain'}
+							/>
+						</Grid> */}
 
 						<Box
 							width='100%'

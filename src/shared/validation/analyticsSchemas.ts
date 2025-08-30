@@ -48,4 +48,18 @@ export const DocumentAnalyticsResponseSchema = z.object({
 	buckets: z.array(AnalyticsBucketSchema), // time-series for charts
 });
 
+/**
+ * Quick stats for a document, used in the dashboard.
+ * This is a simplified version of the full analytics response.
+ */
+export const QuickStatsSchema = z.object({
+	links: z.number().int().nonnegative(),
+	visitors: z.number().int().nonnegative(),
+	uniqueContacts: z.number().int().nonnegative(),
+	totalViews: z.number().int().nonnegative(),
+	totalDownloads: z.number().int().nonnegative(),
+	lastAccessed: z.string().nullable(),
+});
+
 export type DocumentAnalyticsResponse = z.infer<typeof DocumentAnalyticsResponseSchema>;
+export type QuickStats = z.infer<typeof QuickStatsSchema>;

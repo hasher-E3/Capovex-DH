@@ -1,6 +1,7 @@
 import { logWarn, logError } from '@/lib/logger';
 
 import { SupabaseProvider } from '@/services/storage/supabase/supabaseStorageProvider';
+import { currentProvider } from '@/shared/config/storageConfig';
 /**
  * Metadata for a file upload.
  * Describes additional information passed during file upload.
@@ -87,16 +88,16 @@ export class PlaceholderProvider implements StorageProvider {
  * @returns {StorageProvider} - An instance of the selected storage provider.
  */
 function selectStorageProvider(): StorageProvider {
-	const provider = process.env.STORAGE_PROVIDER;
-
-	switch (provider) {
+	switch (currentProvider) {
 		case 'supabase':
 			return new SupabaseProvider();
 		case 'local':
 			// PlaceholderProvider can be replaced with an actual LocalProvider later
 			return new PlaceholderProvider();
 		default:
-			throw new Error(`Unsupported storage provider specified in STORAGE_PROVIDER: ${provider}`);
+			throw new Error(
+				`Unsupported storage provider specified in STORAGE_PROVIDER: ${currentProvider}`,
+			);
 	}
 }
 

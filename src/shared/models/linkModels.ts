@@ -1,28 +1,25 @@
 import { VisitorFieldKey } from '../config/visitorFieldsConfig';
 
 /**
- * Metadata for a public document link.
- */
-export interface PublicLinkMeta {
-	isPasswordProtected: boolean;
-	visitorFields: string[]; // Required visitor inputs
-	signedUrl?: string; // Only present when link is truly public
-}
-
-/**
  * API response shape for public link metadata.
  */
 export interface PublicLinkMetaResponse {
 	message: string;
-	data: {
-		isPasswordProtected: boolean;
-		visitorFields: VisitorFieldKey[];
-		signedUrl?: string;
-		fileName?: string;
-		size?: number;
-		fileType?: string;
-		documentId?: string;
-	};
+	data: PublicLinkMeta;
+}
+
+/**
+ * Metadata for a link, including optional instant-view fields.
+ */
+export interface PublicLinkMeta {
+	isPasswordProtected: boolean;
+	visitorFields: VisitorFieldKey[];
+	ownerId: string;
+	signedUrl?: string;
+	fileName?: string;
+	size?: number;
+	fileType?: string;
+	documentId?: string;
 }
 
 /**
@@ -70,8 +67,7 @@ export interface Contact {
 	lastViewedLink: string; // The last link or friendly name they viewed
 	totalVisits: number; // Total visits for that email across the user's links
 	downloads: number; // Total downloads by this contact
-	duration: string; // Total or average duration (format depends on analytics)
-	completion: string; // Completion metric (format depends on analytics)
+	views: string; // Total Views by this contact
 }
 
 // =========== LINK VISITOR DETAIL ===========

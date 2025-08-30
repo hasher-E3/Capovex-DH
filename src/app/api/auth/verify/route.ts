@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authService } from '@/services/auth/authService';
+import { appBaseUrl } from '@/shared/config/routesConfig';
 
 /** GET /api/auth/verify?token=abc */
 export async function GET(req: NextRequest) {
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
 	const token = new URL(req.url).searchParams.get('token') ?? undefined;
 	const result = await authService.verifyUser({ token });
 
-	const redirectUrl = new URL(`${process.env.NEXT_PUBLIC_APP_URL}/auth/sign-in`);
+	const redirectUrl = new URL(`${appBaseUrl}/auth/sign-in`);
 
 	if (result.success) {
 		redirectUrl.searchParams.set('verified', 'true');

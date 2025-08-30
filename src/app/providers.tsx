@@ -1,6 +1,7 @@
 'use client';
+
 import { SessionProvider } from 'next-auth/react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
@@ -12,15 +13,29 @@ import { ModalProvider } from '@/providers/modal/ModalProvider';
 import QueryProvider from '@/providers/query/QueryProvider';
 import { ToastProvider } from '@/providers/toast/ToastProvider';
 
-import globalTheme from '@/theme/globalTheme';
 import { LoadingSpinner } from '@/components';
+import mainTheme from '@/theme/mainTheme';
+import { BrandingSetting } from '@/shared/models';
+import { buildBrandTheme } from '@/theme';
 
-export default function Providers({ children }: { children: React.ReactNode }) {
+export default function Providers({
+	children,
+	branding,
+}: {
+	children: React.ReactNode;
+	branding?: BrandingSetting | null;
+}) {
 	const [isHydrated, setIsHydrated] = useState(false);
 
 	useEffect(() => {
 		setIsHydrated(true);
 	}, []);
+
+	// Build the theme client-side to avoid passing functions over RSC boundary
+	const theme = useMemo(
+		() => (branding ? buildBrandTheme(branding) : mainTheme),
+		[branding], // mainTheme is module-level stable
+	);
 
 	if (!isHydrated) {
 		// Show a loading spinner while the client-side is hydrating
@@ -30,8 +45,8 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 	return (
 		<SessionProvider>
 			<AppRouterCacheProvider>
-				<ThemeProvider theme={globalTheme}>
-					<CssBaseline />
+				<ThemeProvider theme={theme}>
+					<CssBaseline enableColorScheme />
 					<ToastProvider>
 						<LocalizationProvider dateAdapter={AdapterDayjs}>
 							<QueryProvider>

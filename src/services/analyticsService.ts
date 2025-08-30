@@ -25,7 +25,7 @@ export const analyticsService = {
 	 * @returns An AnalyticsSummary object containing totals, per-link stats, and time-series buckets.
 	 * @throws ServiceError if the document does not exist or belongs to another user.
 	 */
-	async getAnalyticsForDocument(
+	async getDocumentAnalytics(
 		documentId: string,
 		period: AnalyticsPeriod = 'all',
 	): Promise<AnalyticsSummary> {

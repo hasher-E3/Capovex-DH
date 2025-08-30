@@ -8,9 +8,9 @@ import { BarChartIcon, CheckIcon, LinkIcon, SettingsIcon } from '@/icons';
 import { NavLink } from '@/components';
 import ActionMenu from './ActionMenu';
 
-import { formatDateTime } from '@/shared/utils';
-import { DocumentType } from '@/shared/models';
 import { FileTypeConfig } from '@/shared/config/fileIcons';
+import { DocumentType } from '@/shared/models';
+import { formatDateTime } from '@/shared/utils';
 
 interface Props {
 	document: DocumentType;
@@ -78,7 +78,7 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 							gap='0.5rem'>
 							<span>{formatDateTime(document.createdAt)}</span>
 							<Typography variant='subtitle1'>•</Typography>
-							<span>{document.links} links</span>
+							<span>{document.stats.links} links</span>
 							<Typography variant='subtitle1'>•</Typography>
 							<span>Version 1</span>
 						</Typography>
@@ -110,7 +110,7 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 			<TableCell sx={{ textAlign: 'center' }}>
 				<Chip
 					icon={<BarChartIcon />}
-					label={`${document.viewers} views`}
+					label={`${document.stats.totalViews} views`}
 					size='small'
 					color='secondary'
 					sx={{
@@ -141,7 +141,7 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 						open={open}
 						anchorEl={anchorEl}
 						onDelete={onDelete}
-						documentId={document.documentId}
+						document={document}
 						onClose={handleMenuClose}
 						onAnalytics={routetoDocument}
 					/>
