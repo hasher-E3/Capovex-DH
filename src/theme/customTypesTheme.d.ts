@@ -6,7 +6,7 @@ import {
 	BorderTokens,
 	HoverTokens,
 	DisabledTokens,
-} from '@/shared/models';
+} from './themeTypes';
 
 declare module '@mui/material' {
 	interface SimplePaletteColorOptions {

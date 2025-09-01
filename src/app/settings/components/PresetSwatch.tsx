@@ -1,7 +1,8 @@
 'use client';
 import { Box } from '@mui/material';
-import { presetPaletteMap } from '@/theme/branding/data/presetPaletteMap';
+
 import { ThemePreset } from '@/shared/config/brandingConfig';
+import { presetPaletteMap } from '@/theme';
 
 /**
  * Tiny row of coloured dots that visually summarises a preset theme.
@@ -9,9 +10,11 @@ import { ThemePreset } from '@/shared/config/brandingConfig';
  */
 export default function PresetSwatch({ name }: { name: ThemePreset }) {
 	const p = presetPaletteMap[name];
+	console.log('🚀 ~ PresetSwatch ~ p:', p);
 
 	// Pick any 4–5 representative hues (60-tone keeps contrast predictable)
 	const hues = [p.primary[60], p.secondary[60], p.tertiary[60], p.success[60]];
+	console.log('🚀 ~ PresetSwatch ~ hues:', hues);
 
 	return (
 		<Box

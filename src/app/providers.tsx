@@ -3,7 +3,7 @@
 import { SessionProvider } from 'next-auth/react';
 import { useEffect, useMemo, useState } from 'react';
 
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, Theme, ThemeProvider } from '@mui/material';
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v13-appRouter';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -31,7 +31,6 @@ export default function Providers({
 		setIsHydrated(true);
 	}, []);
 
-	// Build the theme client-side to avoid passing functions over RSC boundary
 	const theme = useMemo(
 		() => (branding ? buildBrandTheme(branding) : mainTheme),
 		[branding], // mainTheme is module-level stable
