@@ -1,9 +1,25 @@
+'use client';
+
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 
-import { Avatar, Box, Chip, IconButton, TableCell, TableRow, Typography } from '@mui/material';
+import {
+	Avatar,
+	Box,
+	Chip,
+	IconButton,
+	TableCell,
+	TableRow,
+	Typography,
+} from '@mui/material';
 
-import { BarChartIcon, CheckIcon, LinkIcon, SettingsIcon } from '@/icons';
+import {
+	BarChartIcon,
+	CheckIcon,
+	LinkIcon,
+	SettingsIcon,
+} from '@/icons';
 
 import { NavLink } from '@/components';
 import ActionMenu from './ActionMenu';
@@ -11,6 +27,7 @@ import ActionMenu from './ActionMenu';
 import { FileTypeConfig } from '@/shared/config/fileIcons';
 import { DocumentType } from '@/shared/models';
 import { formatDateTime } from '@/shared/utils';
+import { UserRole } from '@/shared/enums';
 
 interface Props {
 	document: DocumentType;
@@ -19,8 +36,12 @@ interface Props {
 
 const DocumentsTableRow = ({ document, onDelete }: Props) => {
 	const router = useRouter();
-	const [isLinkCopied, setIsLinkCopied] = useState(false);
+	const { data: session } = useSession();
 
+	// ✅ Investor == Admin
+	const isInvestor = session?.user?.role === UserRole.Admin;
+
+	const [isLinkCopied, setIsLinkCopied] = useState(false);
 	const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 	const open = Boolean(anchorEl);
 
@@ -35,18 +56,17 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 	const routetoDocument = () => {
 		router.push(`/documents/${document.documentId}`);
 	};
+
 	const linkToCopy = () => {
 		const totalLinks = document.createdLinks?.length ?? 0;
 		return document.createdLinks?.[totalLinks - 1]?.createdLink ?? '';
 	};
 
 	const handleLinkCopy = () => {
-		if (linkToCopy() !== undefined) {
+		if (linkToCopy()) {
 			navigator.clipboard.writeText(linkToCopy());
 			setIsLinkCopied(true);
-			setTimeout(() => {
-				setIsLinkCopied(false);
-			}, 3000);
+			setTimeout(() => setIsLinkCopied(false), 3000);
 		}
 	};
 
@@ -54,88 +74,78 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 		<TableRow hover>
 			<TableCell sx={{ pr: 0, textAlign: 'center' }}>
 				<Box
-					component={FileTypeConfig[document.fileType] || FileTypeConfig['General']}
+					component={
+						FileTypeConfig[document.fileType] ??
+						FileTypeConfig['General']
+					}
 					sx={{ width: 24, height: 24 }}
 				/>
 			</TableCell>
+
 			<TableCell>
-				<Box
-					display='flex'
-					alignItems='center'>
+				<Box display="flex" alignItems="center">
 					<Box>
 						<NavLink
 							href={`/documents/${document.documentId}`}
 							linkText={document.fileName}
-							color='text.primary'
-							prefetch={true}
+							color="text.primary"
+							prefetch
 						/>
 
 						<Typography
-							variant='caption'
-							component='div'
-							display='flex'
-							alignItems='center'
-							gap='0.5rem'>
+							variant="caption"
+							component="div"
+							display="flex"
+							alignItems="center"
+							gap="0.5rem"
+						>
 							<span>{formatDateTime(document.createdAt)}</span>
-							<Typography variant='subtitle1'>•</Typography>
+							<Typography variant="subtitle1">•</Typography>
 							<span>{document.stats.links} links</span>
-							<Typography variant='subtitle1'>•</Typography>
+							<Typography variant="subtitle1">•</Typography>
 							<span>Version 1</span>
 						</Typography>
 					</Box>
 				</Box>
 			</TableCell>
+
 			<TableCell>
-				<Box
-					display='flex'
-					alignItems='center'
-					textTransform='capitalize'>
-					{document.uploader.avatar ? (
-						<Avatar
-							src={document.uploader.avatar}
-							alt={document.uploader.name}
-							sx={{ width: 24, height: 24, mr: 5 }}
-						/>
-					) : (
-						<Avatar
-							alt={document.uploader.name}
-							sx={{ width: 24, height: 24, mr: 5 }}>
-							{document.uploader.name.charAt(0).toUpperCase()}
-						</Avatar>
-					)}
+				<Box display="flex" alignItems="center">
+					<Avatar sx={{ width: 24, height: 24, mr: 5 }}>
+						{document.uploader.name.charAt(0).toUpperCase()}
+					</Avatar>
 					{document.uploader.name}
 				</Box>
 			</TableCell>
 
-			<TableCell sx={{ textAlign: 'center' }}>
-				<Chip
-					icon={<BarChartIcon />}
-					label={`${document.stats.totalViews} views`}
-					size='small'
-					color='secondary'
-					sx={{
-						width: '8rem',
-					}}
-				/>
-			</TableCell>
+{!isInvestor && (
+	<TableCell sx={{ textAlign: 'center' }}>
+		<Chip
+			icon={<BarChartIcon />}
+			label={`${document.stats.totalViews} views`}
+			size="small"
+			color="secondary"
+			sx={{ width: '8rem' }}
+		/>
+	</TableCell>
+)}
+
+
+
 			<TableCell sx={{ textAlign: 'center' }}>
 				<IconButton
-					disabled={document.createdLinks?.length === 0}
-					onClick={handleLinkCopy}>
-					{isLinkCopied ? (
-						<CheckIcon />
-					) : (
-						<LinkIcon disabled={document.createdLinks?.length === 0} />
-					)}
+					disabled={!document.createdLinks?.length}
+					onClick={handleLinkCopy}
+				>
+					{isLinkCopied ? <CheckIcon /> : <LinkIcon />}
 				</IconButton>
 			</TableCell>
+
 			<TableCell sx={{ textAlign: 'center' }}>
 				<IconButton onClick={handleMenuOpen}>
-					<SettingsIcon
-						width={20}
-						height={20}
-					/>
+					<SettingsIcon width={20} height={20} />
 				</IconButton>
+
 				{open && (
 					<ActionMenu
 						open={open}
@@ -143,7 +153,8 @@ const DocumentsTableRow = ({ document, onDelete }: Props) => {
 						onDelete={onDelete}
 						document={document}
 						onClose={handleMenuClose}
-						onAnalytics={routetoDocument}
+						// ❌ Investor does NOT get analytics
+						onAnalytics={!isInvestor ? routetoDocument : undefined}
 					/>
 				)}
 			</TableCell>

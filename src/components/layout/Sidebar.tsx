@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useState, ComponentType } from 'react';
 import { useSession } from 'next-auth/react';
 
@@ -42,7 +42,6 @@ type SidebarItem = {
 /* -------------------------------------------------------------------------- */
 
 // INVESTOR (Admin)
-// Update your INVESTOR_MENU to use query params
 const INVESTOR_MENU: SidebarItem[] = [
   { text: 'Executive Overview', href: '/documents?category=EXECUTIVE_OVERVIEW' },
   { text: 'Founders & Management', href: '/documents?category=FOUNDERS_MANAGEMENT' },
@@ -70,7 +69,11 @@ const MANAGER_MENU: SidebarItem[] = [
 
 export default function Sidebar() {
   const [isOpen, setIsOpen] = useState(false);
+
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const activeCategory = searchParams.get('category');
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
@@ -79,10 +82,7 @@ export default function Sidebar() {
 
   const role = session?.user?.role;
 
-  // Your mapping
   const isInvestor = role === UserRole.Admin;
-  const isManager = role === UserRole.User || role === UserRole.Member;
-
   const menuItems = isInvestor ? INVESTOR_MENU : MANAGER_MENU;
 
   const openSidebar = () => setIsOpen(true);
@@ -135,8 +135,13 @@ export default function Sidebar() {
 
             <List>
               {menuItems.map(({ text, icon, href }) => {
-                const isActive =
-                  pathname === href || pathname.startsWith(`${href}/`);
+                const hrefCategory = isInvestor
+                  ? new URL(href, 'http://dummy').searchParams.get('category')
+                  : null;
+
+                const isActive = isInvestor
+                  ? pathname === '/documents' && activeCategory === hrefCategory
+                  : pathname === href || pathname.startsWith(`${href}/`);
 
                 return (
                   <ListItem
@@ -199,7 +204,7 @@ export default function Sidebar() {
           </Box>
 
           {/* -------------------- BOTTOM -------------------- */}
-         <DropdownMenu />
+          <DropdownMenu />
         </Stack>
       </Drawer>
     </Box>

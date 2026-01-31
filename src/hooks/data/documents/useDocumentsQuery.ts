@@ -4,20 +4,43 @@ import { useQuery } from '@tanstack/react-query';
 import { DocumentType } from '@/shared/models';
 import { queryKeys } from '@/shared/queryKeys';
 
+/* -------------------------------------------------------------------------- */
+/*  Types                                                                     */
+/* -------------------------------------------------------------------------- */
+
 interface DocumentResponse {
 	documents: DocumentType[];
 }
 
-const fetchDocuments = async (): Promise<DocumentResponse> => {
-	const response = await axios.get('/api/documents');
+type UseDocumentsQueryParams = {
+	category?: string;
+};
+
+/* -------------------------------------------------------------------------- */
+/*  Fetcher                                                                   */
+/* -------------------------------------------------------------------------- */
+
+const fetchDocuments = async (
+	params?: UseDocumentsQueryParams,
+): Promise<DocumentResponse> => {
+	const response = await axios.get('/api/documents', {
+		params: {
+			category: params?.category,
+		},
+	});
 
 	return response.data;
 };
 
-const useDocumentsQuery = () => {
+/* -------------------------------------------------------------------------- */
+/*  Hook                                                                      */
+/* -------------------------------------------------------------------------- */
+
+const useDocumentsQuery = (params?: UseDocumentsQueryParams) => {
 	return useQuery({
-		queryKey: queryKeys.documents.all,
-		queryFn: fetchDocuments,
+		// 🔑 category-aware cache
+		queryKey: [...queryKeys.documents.all, params?.category],
+		queryFn: () => fetchDocuments(params),
 	});
 };
 

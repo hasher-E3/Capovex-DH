@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  seed     = "prisma/seed.ts"
 }
 
 datasource db {
@@ -87,17 +86,20 @@ enum UserRole {
  */
 
 model Document {
-  id         Int      @id @default(autoincrement())
-  documentId String   @unique @default(uuid())
-  userId     String
-  fileName   String
-  filePath   String   @db.Text
-  fileType   String
-  size       Int
-  createdAt  DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt  DateTime @updatedAt @db.Timestamptz(6)
-  category   DocumentCategory 
-  user          User                @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  documentId  String   @unique @default(uuid())
+  userId      String
+  fileName    String
+  filePath    String   @db.Text
+  fileType    String
+  size        Int
+  createdAt   DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+  
+  // This uses the Enum defined below
+  category    DocumentCategory  @default(OTHER) 
+  
+  user        User     @relation(fields: [userId], references: [userId], onDelete: Cascade)
   documentLinks DocumentLink[]
   analytics     DocumentAnalytics[]
 
@@ -240,4 +242,5 @@ enum DocumentCategory {
   COMPLIANCE
   HUMAN_RESOURCES
   RISKS_LITIGATION
+  OTHER 
 }

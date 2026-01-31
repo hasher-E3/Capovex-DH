@@ -1,4 +1,7 @@
+'use client';
+
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 import { logDebug } from '@/lib/logger';
 
@@ -12,6 +15,7 @@ import { useModalContext } from '@/providers/modal/ModalProvider';
 
 import { DocumentType } from '@/shared/models';
 import { isViewableFileType } from '@/shared/utils';
+import { UserRole } from '@/shared/enums';
 
 interface Props {
 	open: boolean;
@@ -22,18 +26,6 @@ interface Props {
 	onAnalytics?: () => void;
 }
 
-/**
- * ActionMenu component for document actions such as view, share, analytics, and delete.
- * Integrates with modal context to open dialogs for sharing, deleting, and uploading documents.
- *
- * @param anchorEl    - The anchor element for the menu.
- * @param open        - Whether the menu is open.
- * @param onClose     - Function to close the menu.
- * @param document    - The document object for which actions are available.
- * @param onDelete    - Callback to delete the document.
- * @param onAnalytics - (Optional) Callback to view analytics for the document.
- * @returns The rendered action menu component.
- */
 export default function ActionMenu({
 	anchorEl,
 	open,
@@ -42,36 +34,23 @@ export default function ActionMenu({
 	onDelete,
 	onAnalytics,
 }: Props) {
+	const { data: session } = useSession();
+
+	// ✅ Investor == Admin
+	const isInvestor = session?.user?.role === UserRole.Admin;
+
 	const { openModal } = useModalContext();
 	const { showToast } = useToast();
 
-	// Outdated code for opening a create link dialog --- STARTS
+	// Deprecated state (kept as-is)
 	const [newLinkUrl, setNewLinkUrl] = useState('');
 	const [createLinkOpen, setCreateLinkOpen] = useState(false);
 
-	/**
-	 * Deprecated: Opens the old create link dialog.
-	 */
-	function DeprecatedhandleOpenCreateLink() {
-		setCreateLinkOpen(true);
-		// onClose();
-	}
-	/**
-	 * Deprecated: Handles closing the old create link dialog.
-	 * @param action - The action taken in the dialog.
-	 * @param createdLink - The created link URL, if any.
-	 */
 	function DeprecatedhandleCloseCreateLink(action: string, createdLink?: string) {
 		setCreateLinkOpen(false);
-		if (createdLink) {
-			setNewLinkUrl(createdLink);
-		}
+		if (createdLink) setNewLinkUrl(createdLink);
 	}
-	// Outdated code for opening a create link dialog --- ENDS
 
-	/**
-	 * Opens the modern create link modal and, on link generation, opens the copy link modal.
-	 */
 	const handleOpenCreateLink = () => {
 		openModal({
 			type: 'linkCreate',
@@ -88,9 +67,6 @@ export default function ActionMenu({
 		onClose();
 	};
 
-	/**
-	 * Opens the delete confirmation modal for the document.
-	 */
 	const handleDelete = () => {
 		openModal({
 			type: 'deleteConfirm',
@@ -104,34 +80,10 @@ export default function ActionMenu({
 		});
 	};
 
-	/**
-	 * Opens the upload file modal for updating the document.
-	 */
-	const handleUpload = () => {
-		openModal({
-			type: 'uploadFile',
-			contentProps: {
-				title: 'Update with a new document',
-				description: 'When you update with a new document, the current link won’t change.',
-				onUploadComplete: () => {
-					logDebug('Document updated successfully!');
-					showToast({
-						message: 'Document updated successfully!',
-						variant: 'success',
-					});
-				},
-			},
-		});
-	};
-
-	/**
-	 * Opens the file viewer modal for previewing the document.
-	 */
 	const handleFilePreview = () => {
 		openModal({ type: 'fileViewer', contentProps: { document } });
 	};
 
-	// Check if the document can be previewed
 	const canPreview = isViewableFileType(document.fileType);
 
 	return (
@@ -140,31 +92,41 @@ export default function ActionMenu({
 				anchorEl={anchorEl}
 				open={open}
 				onClose={onClose}
-				disableScrollLock={true}>
-				{onAnalytics && <MenuItem onClick={onAnalytics}>View Details</MenuItem>}
+				disableScrollLock
+			>
+				{/* ❌ Investor should NOT see analytics */}
+				{!isInvestor && onAnalytics && (
+					<MenuItem onClick={onAnalytics}>View Details</MenuItem>
+				)}
+
+				{/* ✅ Everyone can share */}
 				<MenuItem onClick={handleOpenCreateLink}>Share</MenuItem>
-				{canPreview && <MenuItem onClick={handleFilePreview}>Preview</MenuItem>}
-				<MenuItem onClick={handleDelete}>
-					<Typography
-						variant='body1'
-						color='error'>
-						Delete
-					</Typography>
-				</MenuItem>
+
+				{/* ✅ Preview allowed if file type supports it */}
+				{canPreview && (
+					<MenuItem onClick={handleFilePreview}>Preview</MenuItem>
+				)}
+
+				{/* ❌ Investor should NOT see delete */}
+				{!isInvestor && (
+					<MenuItem onClick={handleDelete}>
+						<Typography variant="body1" color="error">
+							Delete
+						</Typography>
+					</MenuItem>
+				)}
 			</Menu>
 
-			{/* Uncomment the following lines to enable the OLD CreateLink and ShareLinkDialog components */}
-			{/* CREATE LINK DIALOG */}
+			{/* Legacy dialogs (kept untouched) */}
 			<CreateLink
 				open={createLinkOpen}
 				documentId={document.documentId}
 				onClose={DeprecatedhandleCloseCreateLink}
 			/>
 
-			{/* SHAREABLE LINK DIALOG */}
 			<ShareLinkDialog
 				linkUrl={newLinkUrl}
-				onClose={() => setNewLinkUrl('')} // hide the dialog
+				onClose={() => setNewLinkUrl('')}
 			/>
 		</>
 	);
